@@ -16,9 +16,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
-import { medicalHistory } from "@/lib/data"
+import type { MedicalHistory } from "@/lib/types"
 
-export function EmergencyAlertButton() {
+interface EmergencyAlertButtonProps {
+  medicalHistory: MedicalHistory;
+}
+
+export function EmergencyAlertButton({ medicalHistory }: EmergencyAlertButtonProps) {
   const [loading, setLoading] = useState(false)
   const [location, setLocation] = useState<string | null>(null)
   const [summary, setSummary] = useState<string | null>(null)
