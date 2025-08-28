@@ -43,3 +43,22 @@ export type ActivityLog = {
   details: string;
   timestamp: string;
 };
+
+export type WellnessData = {
+  dailyActivity: {
+    labels: string[];
+    datasets: {
+      label: string;
+      data: number[];
+      color: string;
+    }[];
+  };
+  breakCompliance: {
+    taken: number;
+    recommended: number;
+  };
+  usageHeatmap: {
+    day: string;
+    [hour: string]: number | string;
+  }[];
+};

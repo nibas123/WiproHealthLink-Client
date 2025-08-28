@@ -1,4 +1,4 @@
-import type { User, MedicalHistory, ActivityLog } from './types';
+import type { User, MedicalHistory, ActivityLog, WellnessData } from './types';
 
 export const user: User = {
   name: 'Jane Doe',
@@ -66,3 +66,32 @@ export const activityLogs: ActivityLog[] = [
     timestamp: '2023-10-23T16:45:00Z',
   },
 ];
+
+export const wellnessData: WellnessData = {
+  dailyActivity: {
+    labels: ['8am', '9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm', '5pm'],
+    datasets: [
+      {
+        label: 'Keystrokes',
+        data: [1200, 2800, 4500, 3200, 1500, 4200, 5500, 4800, 3000, 2000],
+        color: 'var(--chart-1)',
+      },
+      {
+        label: 'Mouse Clicks',
+        data: [300, 600, 800, 700, 400, 900, 1100, 1000, 700, 500],
+        color: 'var(--chart-2)',
+      },
+    ],
+  },
+  breakCompliance: {
+    taken: 12,
+    recommended: 15,
+  },
+  usageHeatmap: [
+    { day: 'Mon', '9am': 8, '10am': 9, '11am': 7, '1pm': 8, '2pm': 6, '4pm': 5 },
+    { day: 'Tue', '9am': 7, '10am': 8, '11am': 9, '1pm': 6, '2pm': 7, '4pm': 6 },
+    { day: 'Wed', '9am': 9, '10am': 7, '11am': 6, '1pm': 9, '2pm': 8, '4pm': 7 },
+    { day: 'Thu', '9am': 6, '10am': 9, '11am': 8, '1pm': 7, '2pm': 9, '4pm': 8 },
+    { day: 'Fri', '9am': 8, '10am': 6, '11am': 7, '1pm': 8, '2pm': 7, '4pm': 9 },
+  ],
+};

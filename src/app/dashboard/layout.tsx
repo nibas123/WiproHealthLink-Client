@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Activity, LayoutDashboard, Settings } from "lucide-react"
+import { Activity, Heart, LayoutDashboard, Settings } from "lucide-react"
 
 import {
   Sidebar,
@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button"
 
 const menuItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/dashboard/wellness", label: "Wellness", icon: Heart },
     { href: "/dashboard/activity", label: "Activity Log", icon: Activity },
 ]
 
