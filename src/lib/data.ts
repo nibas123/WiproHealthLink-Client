@@ -98,12 +98,4 @@ export const wellnessData: WellnessData = {
 
 
 export const emergencyAlerts: EmergencyAlert[] = [
-    {
-        id: 'ALERT-003',
-        employeeName: 'Emily Jones',
-        location: 'Parking Garage, Level 2',
-        timestamp: new Date(Date.now() - 120 * 60 * 1000).toISOString(),
-        status: 'Acknowledged',
-        summary: 'Employee had a fall. Minor lacerations, but reporting dizziness. History of Type 2 Diabetes.'
-    }
 ];
