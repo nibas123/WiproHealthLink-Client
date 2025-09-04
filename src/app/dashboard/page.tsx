@@ -1,13 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Bell, HeartPulse, Pill, Siren, Users, PlusCircle, Trash2 } from "lucide-react"
+import { Bell, HeartPulse, Pill, Siren, Users, PlusCircle, Trash2, ShieldCheck, TrendingUp, Sparkles } from "lucide-react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card"
 import {
   Dialog,
@@ -19,7 +21,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog"
-import { medicalHistory as initialMedicalHistory, user } from "@/lib/data"
+import { medicalHistory as initialMedicalHistory, user, wellnessData } from "@/lib/data"
 import { EmergencyAlertButton } from "@/components/emergency-alert-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -27,6 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import type { Allergy, Condition, Medication, EmergencyContact } from "@/lib/types"
 
 type EditableSection = 'allergies' | 'medications' | 'conditions' | 'contacts' | null;
+const breakCompliancePercentage = (wellnessData.breakCompliance.taken / wellnessData.breakCompliance.recommended) * 100
 
 export default function DashboardPage() {
   const [medicalHistory, setMedicalHistory] = useState(initialMedicalHistory);
@@ -225,104 +228,153 @@ export default function DashboardPage() {
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between space-y-2">
+        <div className="flex items-start justify-between space-y-2">
           <div>
             <h1 className="text-3xl font-bold tracking-tight font-headline">
               Welcome back, {user.name.split(" ")[0]}!
             </h1>
             <p className="text-muted-foreground">
-              Here&apos;s a summary of your medical profile. Keep it up to date.
+              Here&apos;s a summary of your health and wellness profile.
             </p>
           </div>
           <div className="flex items-center space-x-2">
             <EmergencyAlertButton medicalHistory={medicalHistory} />
           </div>
         </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-lg font-medium flex items-center gap-2">
-                <Bell className="text-destructive" /> Allergies
-              </CardTitle>
-              <Button variant="outline" size="sm" onClick={() => openDialog('allergies')}>Edit</Button>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {medicalHistory.allergies.map((allergy) => (
-                  <li key={allergy.name} className="flex justify-between items-start">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <Card className="lg:col-span-1">
+             <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-primary">
+                    <Sparkles /> Welcome to HealthLink
+                </CardTitle>
+             </CardHeader>
+             <CardContent className="flex flex-col gap-4">
+                <p className="text-sm text-muted-foreground">
+                    This is your central hub for managing both your critical medical information and your digital wellness habits.
+                </p>
+                <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg border">
+                    <ShieldCheck className="w-6 h-6 text-primary mt-1 shrink-0"/>
                     <div>
-                      <p className="font-medium">{allergy.name}</p>
-                      <p className="text-sm text-muted-foreground">{allergy.details}</p>
+                        <h4 className="font-semibold">Medical Profile</h4>
+                        <p className="text-xs text-muted-foreground">Securely store your medical history for emergencies.</p>
                     </div>
-                    <span className="text-sm font-semibold text-destructive">{allergy.severity}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-lg font-medium flex items-center gap-2">
-                <Pill className="text-primary" /> Medications
-              </CardTitle>
-              <Button variant="outline" size="sm" onClick={() => openDialog('medications')}>Edit</Button>
-            </CardHeader>
-            <CardContent>
-               <ul className="space-y-2">
-                {medicalHistory.medications.map((med) => (
-                  <li key={med.name} className="flex justify-between items-start">
+                </div>
+                 <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg border">
+                    <TrendingUp className="w-6 h-6 text-accent mt-1 shrink-0"/>
                     <div>
-                      <p className="font-medium">{med.name}</p>
-                      <p className="text-sm text-muted-foreground">{med.reason}</p>
+                        <h4 className="font-semibold">Digital Wellness</h4>
+                        <p className="text-xs text-muted-foreground">Track your computer usage and get reminders to take breaks.</p>
                     </div>
-                    <span className="text-sm text-muted-foreground">{med.dosage}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
+                </div>
+             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-lg font-medium flex items-center gap-2">
-                <HeartPulse className="text-primary" /> Conditions
-              </CardTitle>
-               <Button variant="outline" size="sm" onClick={() => openDialog('conditions')}>Edit</Button>
-            </CardHeader>
-            <CardContent>
-               <ul className="space-y-2">
-                {medicalHistory.conditions.map((condition) => (
-                  <li key={condition.name} className="flex justify-between items-start">
-                     <div>
-                      <p className="font-medium">{condition.name}</p>
-                      <p className="text-sm text-muted-foreground">Diagnosed: {new Date(condition.diagnosed).toLocaleDateString()}</p>
+          <div className="lg:col-span-2 grid gap-6 md:grid-cols-2">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg font-medium flex items-center gap-2">
+                    <HeartPulse className="text-accent"/> Wellness Score
+                </CardTitle>
+                 <Button variant="outline" size="sm" asChild>
+                    <Link href="/dashboard/wellness">View Details</Link>
+                </Button>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm text-muted-foreground mb-2">Your break compliance today.</p>
+                    <div className="flex items-center gap-4">
+                        <div
+                            className="relative flex h-24 w-24 items-center justify-center rounded-full bg-muted"
+                        >
+                            <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
+                                <circle
+                                    className="stroke-current text-border"
+                                    cx="18" cy="18" r="16"
+                                    strokeWidth="2" fill="none"
+                                />
+                                <circle
+                                    className="stroke-current text-primary"
+                                    cx="18" cy="18" r="16"
+                                    strokeWidth="2" fill="none"
+                                    strokeDasharray={`${breakCompliancePercentage}, 100`}
+                                />
+                            </svg>
+                            <div className="absolute flex flex-col items-center justify-center">
+                                <span className="text-2xl font-bold">{Math.round(breakCompliancePercentage)}%</span>
+                            </div>
+                        </div>
+                        <div className="flex flex-col">
+                            <p><span className="font-bold">{wellnessData.breakCompliance.taken}</span> breaks taken</p>
+                            <p><span className="font-bold">{wellnessData.breakCompliance.recommended}</span> recommended</p>
+                        </div>
                     </div>
-                    <span className="text-sm font-semibold">{condition.status}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-lg font-medium flex items-center gap-2">
-                <Users className="text-primary" /> Emergency Contacts
-              </CardTitle>
-              <Button variant="outline" size="sm" onClick={() => openDialog('contacts')}>Edit</Button>
-            </CardHeader>
-            <CardContent>
-               <ul className="space-y-2">
-                {medicalHistory.emergencyContacts.map((contact) => (
-                  <li key={contact.name} className="flex justify-between items-start">
-                    <div>
-                      <p className="font-medium">{contact.name}</p>
-                      <p className="text-sm text-muted-foreground">{contact.relationship}</p>
-                    </div>
-                    <span className="text-sm font-mono text-muted-foreground">{contact.phone}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+                </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg font-medium flex items-center gap-2">
+                  <Bell className="text-destructive" /> Allergies
+                </CardTitle>
+                <Button variant="outline" size="sm" onClick={() => openDialog('allergies')}>Edit</Button>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {medicalHistory.allergies.slice(0, 2).map((allergy) => (
+                    <li key={allergy.name} className="flex justify-between items-start">
+                      <div>
+                        <p className="font-medium">{allergy.name}</p>
+                      </div>
+                      <span className="text-sm font-semibold text-destructive">{allergy.severity}</span>
+                    </li>
+                  ))}
+                   {medicalHistory.allergies.length > 2 && (
+                     <li className="text-sm text-muted-foreground pt-1">+ {medicalHistory.allergies.length - 2} more</li>
+                  )}
+                </ul>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg font-medium flex items-center gap-2">
+                  <Pill className="text-primary" /> Medications
+                </CardTitle>
+                <Button variant="outline" size="sm" onClick={() => openDialog('medications')}>Edit</Button>
+              </CardHeader>
+              <CardContent>
+                 <ul className="space-y-2">
+                  {medicalHistory.medications.slice(0, 2).map((med) => (
+                    <li key={med.name} className="flex justify-between items-start">
+                      <div>
+                        <p className="font-medium">{med.name}</p>
+                      </div>
+                      <span className="text-sm text-muted-foreground">{med.dosage}</span>
+                    </li>
+                  ))}
+                  {medicalHistory.medications.length > 2 && (
+                     <li className="text-sm text-muted-foreground pt-1">+ {medicalHistory.medications.length - 2} more</li>
+                  )}
+                </ul>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg font-medium flex items-center gap-2">
+                  <Users className="text-primary" /> Contacts
+                </CardTitle>
+                <Button variant="outline" size="sm" onClick={() => openDialog('contacts')}>Edit</Button>
+              </CardHeader>
+              <CardContent>
+                 <ul className="space-y-2">
+                  {medicalHistory.emergencyContacts.slice(0, 2).map((contact) => (
+                    <li key={contact.name} className="flex justify-between items-start">
+                      <div>
+                        <p className="font-medium">{contact.name}</p>
+                      </div>
+                      <span className="text-sm text-muted-foreground">{contact.relationship}</span>
+                    </li>
+                  ))}
+                 </ul>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
       <DialogContent className="max-w-3xl">
@@ -344,3 +396,5 @@ export default function DashboardPage() {
     </Dialog>
   )
 }
+
+    
