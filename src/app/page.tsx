@@ -1,21 +1,28 @@
 "use client"
 
 import Link from "next/link"
+import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Logo } from "@/components/icons"
+import { Switch } from "@/components/ui/switch"
 
 export default function LoginPage() {
+  const [isDoctor, setIsDoctor] = React.useState(false)
+
+  const loginLink = isDoctor ? "/admin/dashboard" : "/dashboard"
+
   return (
     <div className="w-full h-screen lg:grid lg:min-h-[600px] lg:grid-cols-2 xl:min-h-[800px]">
       <div className="flex items-center justify-center py-12">
         <div className="mx-auto grid w-[350px] gap-6">
           <div className="grid gap-2 text-center">
+             <Logo className="h-16 w-16 mx-auto text-primary" />
             <h1 className="text-3xl font-bold font-headline">Login to HealthLink</h1>
             <p className="text-balance text-muted-foreground">
-              Enter your email below to login to your account
+              Enter your credentials to access your dashboard.
             </p>
           </div>
           <div className="grid gap-4">
@@ -26,6 +33,7 @@ export default function LoginPage() {
                 type="email"
                 placeholder="m@example.com"
                 required
+                defaultValue="jane.doe@wipro.com"
               />
             </div>
             <div className="grid gap-2">
@@ -38,10 +46,17 @@ export default function LoginPage() {
                   Forgot your password?
                 </Link>
               </div>
-              <Input id="password" type="password" required />
+              <Input id="password" type="password" required defaultValue="password" />
+            </div>
+            <div className="flex items-center justify-between">
+                <Label htmlFor="role-switch" className="flex flex-col gap-0.5">
+                    <span className="font-medium">Login as Doctor</span>
+                    <span className="text-xs text-muted-foreground">See the admin dashboard</span>
+                </Label>
+                <Switch id="role-switch" checked={isDoctor} onCheckedChange={setIsDoctor} />
             </div>
             <Button type="submit" className="w-full" asChild>
-              <Link href="/dashboard">Login</Link>
+              <Link href={loginLink}>Login</Link>
             </Button>
             <Button variant="outline" className="w-full">
               Login with Wipro SSO

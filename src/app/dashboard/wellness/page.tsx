@@ -1,11 +1,13 @@
-
 "use client"
 
-import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Cell, Heatmap, ZAxis } from "recharts"
+import { useEffect, useState } from "react"
+import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Cell } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { wellnessData } from "@/lib/data"
 import { Progress } from "@/components/ui/progress"
-import { AlertCircle, TrendingUp } from "lucide-react"
+import { AlertCircle, TrendingUp, Bell } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useToast } from "@/hooks/use-toast"
 
 const breakCompliancePercentage = (wellnessData.breakCompliance.taken / wellnessData.breakCompliance.recommended) * 100
 
@@ -21,6 +23,50 @@ export default function WellnessPage() {
       value: usageHeatmap[i][time],
     }))
   );
+  const { toast } = useToast()
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  useEffect(() => {
+    if ("Notification" in window) {
+      if (Notification.permission === "granted") {
+        setNotificationsEnabled(true);
+      }
+    }
+  }, []);
+
+  const requestNotificationPermission = () => {
+    if (!("Notification" in window)) {
+      toast({
+        variant: "destructive",
+        title: "Unsupported Browser",
+        description: "This browser does not support desktop notifications.",
+      });
+      return;
+    }
+
+    Notification.requestPermission().then((permission) => {
+      if (permission === "granted") {
+        setNotificationsEnabled(true);
+        toast({
+          title: "Notifications Enabled",
+          description: "You will now receive break reminders.",
+        });
+        // Schedule a test notification
+        setTimeout(() => {
+          new Notification("Time for a break!", {
+            body: "Look away from your screen for 20 seconds to rest your eyes.",
+            icon: "/logo.svg", // Note: This file doesn't exist yet, but is a good practice
+          });
+        }, 5000); // 5 seconds for demo
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Notifications Denied",
+          description: "You will not receive break reminders. You can enable them in your browser settings.",
+        });
+      }
+    });
+  };
 
 
   return (
@@ -67,6 +113,18 @@ export default function WellnessPage() {
               <Progress value={breakCompliancePercentage} className="w-full" />
               <span className="text-xl font-bold">{Math.round(breakCompliancePercentage)}%</span>
             </div>
+             {!notificationsEnabled && (
+                <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <div className="flex items-start gap-3">
+                        <Bell className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-1"/>
+                        <div>
+                            <h4 className="font-semibold text-blue-800 dark:text-blue-300">Enable Break Reminders</h4>
+                            <p className="text-xs text-blue-700 dark:text-blue-400">Get desktop notifications when it's time to take a break.</p>
+                        </div>
+                    </div>
+                    <Button size="sm" onClick={requestNotificationPermission}>Enable</Button>
+                </div>
+            )}
             <div className="flex items-start gap-2 text-sm text-muted-foreground p-3 bg-muted/50 rounded-lg border">
                 <AlertCircle className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                 <p>The 20-20-20 rule is a great way to avoid digital eye strain. Every 20 minutes, take a 20-second break to look at something 20 feet away.</p>

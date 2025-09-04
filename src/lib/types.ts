@@ -62,3 +62,12 @@ export type WellnessData = {
     [hour: string]: number | string;
   }[];
 };
+
+export type EmergencyAlert = {
+    id: string;
+    employeeName: string;
+    location: string;
+    timestamp: string;
+    status: 'Pending' | 'Acknowledged';
+    summary: string;
+}
