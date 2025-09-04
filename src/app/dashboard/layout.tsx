@@ -18,7 +18,6 @@ import {
 import { Logo } from "@/components/icons"
 import { UserNav } from "@/components/user-nav"
 import { user } from "@/lib/data"
-import { GlobalStateProvider } from "@/hooks/use-global-state"
 
 const menuItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -34,7 +33,6 @@ export default function DashboardLayout({
   const pathname = usePathname()
 
   return (
-    <GlobalStateProvider>
       <SidebarProvider>
         <Sidebar>
           <SidebarHeader>
@@ -71,6 +69,5 @@ export default function DashboardLayout({
           </main>
         </SidebarInset>
       </SidebarProvider>
-    </GlobalStateProvider>
   )
 }

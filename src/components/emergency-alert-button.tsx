@@ -21,7 +21,7 @@ import { user } from "@/lib/data"
 
 
 export function EmergencyAlertButton() {
-  const { medicalHistory, alerts, setAlerts } = useGlobalState()
+  const { medicalHistory, addAlert } = useGlobalState()
   const [loading, setLoading] = useState(false)
   const [location, setLocation] = useState<string | null>(null)
   const [summary, setSummary] = useState<string | null>(null)
@@ -73,19 +73,14 @@ export function EmergencyAlertButton() {
     )
   }
   
-  const sendAlert = () => {
+  const sendAlert = async () => {
     if (!summary || !location) return
 
-    const newAlert = {
-        id: `ALERT-${Date.now()}`,
+    await addAlert({
         employeeName: user.name,
         location: location,
-        timestamp: new Date().toISOString(),
-        status: 'Pending' as const,
         summary: summary,
-    }
-
-    setAlerts([newAlert, ...alerts]);
+    });
 
      toast({
         title: "✅ Emergency Alert Sent",

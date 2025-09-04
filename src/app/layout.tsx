@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
-import { AlertsProvider } from '@/context/alerts-context';
+import { GlobalStateProvider } from '@/hooks/use-global-state';
 
 export const metadata: Metadata = {
   title: 'HealthLink',
@@ -21,9 +21,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <AlertsProvider>
+        <GlobalStateProvider>
             {children}
-        </AlertsProvider>
+        </GlobalStateProvider>
         <Toaster />
       </body>
     </html>

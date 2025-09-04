@@ -23,11 +23,11 @@ import { useToast } from "@/hooks/use-toast"
 import { useGlobalState } from "@/hooks/use-global-state"
 
 export default function AdminDashboardPage() {
-    const { alerts, setAlerts } = useGlobalState()
+    const { alerts, acknowledgeAlert: acknowledgeAlertOnDb } = useGlobalState()
     const { toast } = useToast()
 
-    const acknowledgeAlert = (id: string) => {
-        setAlerts(alerts.map(alert => alert.id === id ? {...alert, status: 'Acknowledged'} : alert))
+    const handleAcknowledgeAlert = async (id: string) => {
+        await acknowledgeAlertOnDb(id);
         const alert = alerts.find(a => a.id === id)
         toast({
             title: "Alert Acknowledged",
@@ -75,7 +75,7 @@ export default function AdminDashboardPage() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <p className="p-3 text-sm bg-background rounded-md border text-foreground">{alert.summary}</p>
-                        <Button onClick={() => acknowledgeAlert(alert.id)} className="gap-2">
+                        <Button onClick={() => handleAcknowledgeAlert(alert.id)} className="gap-2">
                             <CheckCircle /> Acknowledge
                         </Button>
                     </CardContent>

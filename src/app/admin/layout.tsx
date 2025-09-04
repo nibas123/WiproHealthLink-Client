@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/sidebar"
 import { Logo } from "@/components/icons"
 import { UserNav } from "@/components/user-nav"
-import { GlobalStateProvider } from "@/hooks/use-global-state"
 
 const menuItems = [
     { href: "/admin/dashboard", label: "Alerts Dashboard", icon: Siren },
@@ -32,7 +31,6 @@ export default function AdminLayout({
   const adminUser = {name: "Dr. Smith", email: "dr.smith@wipro.com", avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704e'}
 
   return (
-    <GlobalStateProvider>
       <SidebarProvider>
         <Sidebar>
           <SidebarHeader>
@@ -69,6 +67,5 @@ export default function AdminLayout({
           </main>
         </SidebarInset>
       </SidebarProvider>
-    </GlobalStateProvider>
   )
 }
