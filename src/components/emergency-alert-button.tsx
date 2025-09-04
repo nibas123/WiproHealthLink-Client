@@ -16,23 +16,17 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
-import type { MedicalHistory } from "@/lib/types"
-import { useAlerts } from "@/context/alerts-context"
+import { useGlobalState } from "@/hooks/use-global-state"
 import { user } from "@/lib/data"
 
 
-interface EmergencyAlertButtonProps {
-  medicalHistory: MedicalHistory;
-}
-
-export function EmergencyAlertButton({ medicalHistory }: EmergencyAlertButtonProps) {
+export function EmergencyAlertButton() {
+  const { medicalHistory, alerts, setAlerts } = useGlobalState()
   const [loading, setLoading] = useState(false)
   const [location, setLocation] = useState<string | null>(null)
   const [summary, setSummary] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [dialogOpen, setDialogOpen] = useState(false)
   const { toast } = useToast()
-  const { addAlert } = useAlerts()
 
   const handleAlert = async () => {
     setLoading(true)
@@ -40,6 +34,7 @@ export function EmergencyAlertButton({ medicalHistory }: EmergencyAlertButtonPro
     setSummary(null)
     setLocation(null)
 
+    // 1. Get location
     if (!navigator.geolocation) {
       setError("Geolocation is not supported by your browser.")
       setLoading(false)
@@ -51,11 +46,13 @@ export function EmergencyAlertButton({ medicalHistory }: EmergencyAlertButtonPro
         const currentPosition = `Lat: ${position.coords.latitude}, Lon: ${position.coords.longitude}`
         setLocation(currentPosition)
 
+        // 2. Stringify medical history
         const historyString = `
-          Allergies: ${medicalHistory.allergies.map(a => `${a.name} (${a.severity})`).join(", ")}.
-          Conditions: ${medicalHistory.conditions.map(c => c.name).join(", ")}.
-          Medications: ${medicalHistory.medications.map(m => `${m.name} ${m.dosage}`).join(", ")}.
+          Allergies: ${medicalHistory.allergies.map(a => `${a.name} (${a.severity})`).join(", ") || 'none'}.
+          Conditions: ${medicalHistory.conditions.map(c => c.name).join(", ") || 'none'}.
+          Medications: ${medicalHistory.medications.map(m => `${m.name} ${m.dosage}`).join(", ") || 'none'}.
         `
+        // 3. Call GenAI flow
         try {
           const result = await summarizeMedicalHistory({
             medicalHistory: historyString,
@@ -77,24 +74,27 @@ export function EmergencyAlertButton({ medicalHistory }: EmergencyAlertButtonPro
   }
   
   const sendAlert = () => {
-    if (summary && location) {
-      addAlert({
+    if (!summary || !location) return
+
+    const newAlert = {
         id: `ALERT-${Date.now()}`,
         employeeName: user.name,
-        location,
+        location: location,
         timestamp: new Date().toISOString(),
-        status: 'Pending',
-        summary,
-      });
-      toast({
+        status: 'Pending' as const,
+        summary: summary,
+    }
+
+    setAlerts([newAlert, ...alerts]);
+
+     toast({
         title: "✅ Emergency Alert Sent",
         description: "The on-duty doctor has been notified with your medical summary and location.",
-      });
-    }
+      })
   }
 
   return (
-    <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+    <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button variant="destructive" className="gap-2" onClick={handleAlert}>
           <AlertTriangle className="h-5 w-5" />

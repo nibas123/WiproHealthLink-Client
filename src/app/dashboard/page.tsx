@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Bell, HeartPulse, Pill, Siren, Users, PlusCircle, Trash2, ShieldCheck, TrendingUp, Sparkles } from "lucide-react"
+import { Bell, HeartPulse, Pill, Users, PlusCircle, Trash2, ShieldCheck, TrendingUp, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import {
@@ -9,7 +9,6 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card"
 import {
   Dialog,
@@ -21,18 +20,19 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog"
-import { medicalHistory as initialMedicalHistory, user, wellnessData } from "@/lib/data"
+import { user, wellnessData } from "@/lib/data"
 import { EmergencyAlertButton } from "@/components/emergency-alert-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Allergy, Condition, Medication, EmergencyContact } from "@/lib/types"
+import { useGlobalState } from "@/hooks/use-global-state"
 
 type EditableSection = 'allergies' | 'medications' | 'conditions' | 'contacts' | null;
 const breakCompliancePercentage = (wellnessData.breakCompliance.taken / wellnessData.breakCompliance.recommended) * 100
 
 export default function DashboardPage() {
-  const [medicalHistory, setMedicalHistory] = useState(initialMedicalHistory);
+  const { medicalHistory, setMedicalHistory } = useGlobalState();
   const [editingSection, setEditingSection] = useState<EditableSection>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -238,7 +238,7 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="flex items-center space-x-2">
-            <EmergencyAlertButton medicalHistory={medicalHistory} />
+            <EmergencyAlertButton />
           </div>
         </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -328,6 +328,9 @@ export default function DashboardPage() {
                    {medicalHistory.allergies.length > 2 && (
                      <li className="text-sm text-muted-foreground pt-1">+ {medicalHistory.allergies.length - 2} more</li>
                   )}
+                  {medicalHistory.allergies.length === 0 && (
+                     <li className="text-sm text-muted-foreground pt-1">No allergies listed.</li>
+                  )}
                 </ul>
               </CardContent>
             </Card>
@@ -351,6 +354,9 @@ export default function DashboardPage() {
                   {medicalHistory.medications.length > 2 && (
                      <li className="text-sm text-muted-foreground pt-1">+ {medicalHistory.medications.length - 2} more</li>
                   )}
+                   {medicalHistory.medications.length === 0 && (
+                     <li className="text-sm text-muted-foreground pt-1">No medications listed.</li>
+                  )}
                 </ul>
               </CardContent>
             </Card>
@@ -371,6 +377,9 @@ export default function DashboardPage() {
                       <span className="text-sm text-muted-foreground">{contact.relationship}</span>
                     </li>
                   ))}
+                  {medicalHistory.emergencyContacts.length === 0 && (
+                     <li className="text-sm text-muted-foreground pt-1">No contacts listed.</li>
+                  )}
                  </ul>
               </CardContent>
             </Card>
@@ -396,5 +405,3 @@ export default function DashboardPage() {
     </Dialog>
   )
 }
-
-    

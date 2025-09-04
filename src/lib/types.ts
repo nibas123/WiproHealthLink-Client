@@ -1,7 +1,7 @@
 export type User = {
   name: string;
   email: string;
-  role: 'Admin' | 'Doctor' | 'Staff';
+  role?: 'Admin' | 'Doctor' | 'Staff';
   avatar: string;
 };
 

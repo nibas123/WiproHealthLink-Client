@@ -20,15 +20,15 @@ import { Button } from "@/components/ui/button"
 import { formatDistanceToNow } from "date-fns"
 import { Siren, CheckCircle, User, MapPin, Clock } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { useAlerts } from "@/context/alerts-context"
+import { useGlobalState } from "@/hooks/use-global-state"
 
 export default function AdminDashboardPage() {
-    const { alerts, acknowledgeAlert: acknowledgeContextAlert } = useAlerts()
+    const { alerts, setAlerts } = useGlobalState()
     const { toast } = useToast()
 
     const acknowledgeAlert = (id: string) => {
+        setAlerts(alerts.map(alert => alert.id === id ? {...alert, status: 'Acknowledged'} : alert))
         const alert = alerts.find(a => a.id === id)
-        acknowledgeContextAlert(id)
         toast({
             title: "Alert Acknowledged",
             description: `You have acknowledged the alert for ${alert?.employeeName}.`,
@@ -115,11 +115,13 @@ export default function AdminDashboardPage() {
                   </TableCell>
                 </TableRow>
               ))}
-                {acknowledgedAlerts.length === 0 && (
-                    <TableRow>
-                        <TableCell colSpan={4} className="text-center text-muted-foreground">No acknowledged alerts yet.</TableCell>
-                    </TableRow>
-                )}
+               {acknowledgedAlerts.length === 0 && (
+                <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground">
+                        No acknowledged alerts yet.
+                    </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
