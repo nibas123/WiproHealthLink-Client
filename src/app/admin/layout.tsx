@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Siren, LayoutDashboard } from "lucide-react"
+import { Siren } from "lucide-react"
 
 import {
   Sidebar,
@@ -17,7 +17,9 @@ import {
 } from "@/components/ui/sidebar"
 import { Logo } from "@/components/icons"
 import { UserNav } from "@/components/user-nav"
-import { user } from "@/lib/data"
+import { user as defaultUser } from "@/lib/data"
+import { useAlerts } from "@/context/alerts-context"
+import { Badge } from "@/components/ui/badge"
 
 const menuItems = [
     { href: "/admin/dashboard", label: "Alerts Dashboard", icon: Siren },
@@ -29,7 +31,9 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
-  const adminUser = {...user, name: "Dr. Smith", email: "dr.smith@wipro.com"}
+  const { alerts } = useAlerts()
+  const adminUser = {...defaultUser, name: "Dr. Smith", email: "dr.smith@wipro.com"}
+  const pendingAlertsCount = alerts.filter(a => a.status === 'Pending').length
 
   return (
     <SidebarProvider>
@@ -48,6 +52,9 @@ export default function AdminLayout({
                   <SidebarMenuButton isActive={pathname === item.href}>
                     <item.icon />
                     <span>{item.label}</span>
+                     {item.href === "/admin/dashboard" && pendingAlertsCount > 0 && (
+                        <Badge variant="destructive" className="ml-auto">{pendingAlertsCount}</Badge>
+                    )}
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
@@ -61,7 +68,7 @@ export default function AdminLayout({
           <div className="w-full flex-1">
             <h1 className="font-semibold text-lg">Admin Portal</h1>
           </div>
-          <UserNav />
+          <UserNav user={adminUser}/>
         </header>
         <main className="flex-1 p-4 sm:px-6 sm:py-0 md:p-6 bg-background">
           {children}

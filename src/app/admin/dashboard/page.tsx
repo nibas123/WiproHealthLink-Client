@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import {
   Card,
   CardContent,
@@ -18,19 +17,18 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { emergencyAlerts as initialAlerts } from "@/lib/data"
 import { formatDistanceToNow } from "date-fns"
 import { Siren, CheckCircle, User, MapPin, Clock } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import type { EmergencyAlert } from "@/lib/types"
+import { useAlerts } from "@/context/alerts-context"
 
 export default function AdminDashboardPage() {
-    const [alerts, setAlerts] = useState<EmergencyAlert[]>(initialAlerts)
+    const { alerts, acknowledgeAlert: acknowledgeContextAlert } = useAlerts()
     const { toast } = useToast()
 
     const acknowledgeAlert = (id: string) => {
-        setAlerts(alerts.map(alert => alert.id === id ? {...alert, status: 'Acknowledged'} : alert))
         const alert = alerts.find(a => a.id === id)
+        acknowledgeContextAlert(id)
         toast({
             title: "Alert Acknowledged",
             description: `You have acknowledged the alert for ${alert?.employeeName}.`,
@@ -117,6 +115,11 @@ export default function AdminDashboardPage() {
                   </TableCell>
                 </TableRow>
               ))}
+                {acknowledgedAlerts.length === 0 && (
+                    <TableRow>
+                        <TableCell colSpan={4} className="text-center text-muted-foreground">No acknowledged alerts yet.</TableCell>
+                    </TableRow>
+                )}
             </TableBody>
           </Table>
         </CardContent>

@@ -99,22 +99,6 @@ export const wellnessData: WellnessData = {
 
 export const emergencyAlerts: EmergencyAlert[] = [
     {
-        id: 'ALERT-001',
-        employeeName: 'Jane Doe',
-        location: 'Building 7, 3rd Floor, Desk 301',
-        timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-        status: 'Pending',
-        summary: 'Employee reports severe allergic reaction. History of penicillin allergy (anaphylaxis). Administered EpiPen. Requires immediate medical attention.'
-    },
-    {
-        id: 'ALERT-002',
-        employeeName: 'John Smith',
-        location: 'Cafeteria, Main Campus',
-        timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-        status: 'Pending',
-        summary: 'Employee experiencing chest pain and shortness of breath. History of hypertension. Suspected cardiac event.'
-    },
-    {
         id: 'ALERT-003',
         employeeName: 'Emily Jones',
         location: 'Parking Garage, Level 2',
@@ -122,4 +106,4 @@ export const emergencyAlerts: EmergencyAlert[] = [
         status: 'Acknowledged',
         summary: 'Employee had a fall. Minor lacerations, but reporting dizziness. History of Type 2 Diabetes.'
     }
-]
+];

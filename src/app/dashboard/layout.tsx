@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Activity, Heart, LayoutDashboard, Settings } from "lucide-react"
+import { Activity, Heart, LayoutDashboard } from "lucide-react"
 
 import {
   Sidebar,
@@ -12,15 +12,12 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Logo } from "@/components/icons"
 import { UserNav } from "@/components/user-nav"
-import { Button } from "@/components/ui/button"
+import { user } from "@/lib/data"
 
 const menuItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -65,7 +62,7 @@ export default function DashboardLayout({
           <div className="w-full flex-1">
             {/* Can add breadcrumbs or page title here */}
           </div>
-          <UserNav />
+          <UserNav user={user} />
         </header>
         <main className="flex-1 p-4 sm:px-6 sm:py-0 md:p-6 bg-background">
           {children}

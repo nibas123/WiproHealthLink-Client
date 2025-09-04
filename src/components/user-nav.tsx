@@ -10,9 +10,14 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { user } from "@/lib/data"
+import { user as defaultUser } from "@/lib/data"
+import type { User } from "@/lib/types"
 
-export function UserNav() {
+interface UserNavProps {
+    user?: User
+}
+
+export function UserNav({ user = defaultUser }: UserNavProps) {
   const userInitials = user.name.split(' ').map(n => n[0]).join('');
   return (
     <DropdownMenu>

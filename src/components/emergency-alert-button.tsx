@@ -17,6 +17,9 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
 import type { MedicalHistory } from "@/lib/types"
+import { useAlerts } from "@/context/alerts-context"
+import { user } from "@/lib/data"
+
 
 interface EmergencyAlertButtonProps {
   medicalHistory: MedicalHistory;
@@ -27,7 +30,9 @@ export function EmergencyAlertButton({ medicalHistory }: EmergencyAlertButtonPro
   const [location, setLocation] = useState<string | null>(null)
   const [summary, setSummary] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
   const { toast } = useToast()
+  const { addAlert } = useAlerts()
 
   const handleAlert = async () => {
     setLoading(true)
@@ -35,7 +40,6 @@ export function EmergencyAlertButton({ medicalHistory }: EmergencyAlertButtonPro
     setSummary(null)
     setLocation(null)
 
-    // 1. Get location
     if (!navigator.geolocation) {
       setError("Geolocation is not supported by your browser.")
       setLoading(false)
@@ -47,13 +51,11 @@ export function EmergencyAlertButton({ medicalHistory }: EmergencyAlertButtonPro
         const currentPosition = `Lat: ${position.coords.latitude}, Lon: ${position.coords.longitude}`
         setLocation(currentPosition)
 
-        // 2. Stringify medical history
         const historyString = `
           Allergies: ${medicalHistory.allergies.map(a => `${a.name} (${a.severity})`).join(", ")}.
           Conditions: ${medicalHistory.conditions.map(c => c.name).join(", ")}.
           Medications: ${medicalHistory.medications.map(m => `${m.name} ${m.dosage}`).join(", ")}.
         `
-        // 3. Call GenAI flow
         try {
           const result = await summarizeMedicalHistory({
             medicalHistory: historyString,
@@ -75,14 +77,24 @@ export function EmergencyAlertButton({ medicalHistory }: EmergencyAlertButtonPro
   }
   
   const sendAlert = () => {
-     toast({
+    if (summary && location) {
+      addAlert({
+        id: `ALERT-${Date.now()}`,
+        employeeName: user.name,
+        location,
+        timestamp: new Date().toISOString(),
+        status: 'Pending',
+        summary,
+      });
+      toast({
         title: "✅ Emergency Alert Sent",
         description: "The on-duty doctor has been notified with your medical summary and location.",
-      })
+      });
+    }
   }
 
   return (
-    <AlertDialog>
+    <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <AlertDialogTrigger asChild>
         <Button variant="destructive" className="gap-2" onClick={handleAlert}>
           <AlertTriangle className="h-5 w-5" />
