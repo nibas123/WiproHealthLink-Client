@@ -1,4 +1,6 @@
-import Link from "next/link"
+import { Moon, Sun } from "lucide-react"
+import { useTheme } from "next-themes"
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -20,6 +22,7 @@ interface UserNavProps {
 
 export function UserNav({ user }: UserNavProps) {
   const { logout } = useAuth();
+  const { setTheme, theme } = useTheme()
   const userInitials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
 
   return (
@@ -50,6 +53,10 @@ export function UserNav({ user }: UserNavProps) {
           <DropdownMenuItem disabled>
             Settings
             <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
+            {theme === "light" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+            Toggle theme
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
