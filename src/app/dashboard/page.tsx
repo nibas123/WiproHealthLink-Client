@@ -2,7 +2,7 @@
 "use client"
 
 import { useState } from "react"
-import { AlertTriangle, Wifi, MapPin, Building, Loader2 } from "lucide-react"
+import { AlertTriangle, Wifi, MapPin, Building, Loader2, HeartPulse, Pill, ShieldAlert, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Badge } from "@/components/ui/badge"
 
 export default function DashboardPage() {
   const { userProfile } = useAuth()
@@ -74,7 +75,7 @@ export default function DashboardPage() {
                 Welcome back, {userProfile.name.split(" ")[0]}!
                 </h1>
                 <p className="text-muted-foreground">
-                This is your employee dashboard.
+                Here's a summary of your profile. Keep it up to date.
                 </p>
             </div>
             <AlertDialog>
@@ -135,6 +136,64 @@ export default function DashboardPage() {
                 </div>
             </CardContent>
         </Card>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-2"><ShieldAlert className="text-destructive"/>Allergies</CardTitle>
+              <Button variant="outline" size="sm" disabled>Edit</Button>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-3">
+                  <li className="flex justify-between items-center"><span className="font-medium">Penicillin</span><Badge variant="destructive">Severe</Badge></li>
+                  <li className="flex justify-between items-center"><span className="font-medium">Peanuts</span><Badge variant="destructive" className="bg-orange-500 hover:bg-orange-500/80">High</Badge></li>
+                  <li className="flex justify-between items-center"><span className="font-medium">Dust Mites</span><Badge variant="secondary" className="bg-yellow-400 text-yellow-900 hover:bg-yellow-400/80">Low</Badge></li>
+              </ul>
+              <p className="text-xs text-muted-foreground mt-4">Details are placeholder. Editing coming soon.</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-2"><Pill className="text-primary"/>Medications</CardTitle>
+              <Button variant="outline" size="sm" disabled>Edit</Button>
+            </CardHeader>
+            <CardContent>
+               <ul className="space-y-3">
+                  <li className="flex justify-between items-center"><span className="font-medium">Lisinopril</span><span className="text-muted-foreground text-sm">10mg Daily</span></li>
+                  <li className="flex justify-between items-center"><span className="font-medium">Metformin</span><span className="text-muted-foreground text-sm">500mg Twice Daily</span></li>
+                  <li className="flex justify-between items-center"><span className="font-medium">Ventolin Inhaler</span><span className="text-muted-foreground text-sm">As needed</span></li>
+              </ul>
+               <p className="text-xs text-muted-foreground mt-4">Details are placeholder. Editing coming soon.</p>
+            </CardContent>
+          </Card>
+           <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-2"><HeartPulse className="text-green-600"/>Conditions</CardTitle>
+              <Button variant="outline" size="sm" disabled>Edit</Button>
+            </CardHeader>
+            <CardContent>
+               <ul className="space-y-3">
+                  <li className="flex justify-between items-center"><span className="font-medium">Hypertension</span><Badge variant="secondary">Managed</Badge></li>
+                  <li className="flex justify-between items-center"><span className="font-medium">Type 2 Diabetes</span><Badge variant="secondary">Managed</Badge></li>
+                  <li className="flex justify-between items-center"><span className="font-medium">Asthma</span><Badge variant="outline">Active</Badge></li>
+              </ul>
+               <p className="text-xs text-muted-foreground mt-4">Details are placeholder. Editing coming soon.</p>
+            </CardContent>
+          </Card>
+           <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-2"><Users className="text-primary"/>Emergency Contacts</CardTitle>
+              <Button variant="outline" size="sm" disabled>Edit</Button>
+            </CardHeader>
+            <CardContent>
+                <ul className="space-y-3">
+                  <li className="flex justify-between items-center"><span className="font-medium">John Doe <span className="text-sm text-muted-foreground">(Spouse)</span></span><span className="text-muted-foreground text-sm">555-123-4567</span></li>
+                  <li className="flex justify-between items-center"><span className="font-medium">Dr. Emily Carter <span className="text-sm text-muted-foreground">(Physician)</span></span><span className="text-muted-foreground text-sm">555-987-6543</span></li>
+              </ul>
+               <p className="text-xs text-muted-foreground mt-4">Details are placeholder. Editing coming soon.</p>
+            </CardContent>
+          </Card>
+        </div>
     </div>
   )
 }
