@@ -2,7 +2,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { collection, query, where, onSnapshot, doc, updateDoc } from "firebase/firestore"
+import { collection, query, where, onSnapshot, doc, updateDoc, getDocs, orderBy } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import type { Emergency } from "@/lib/types"
 import { Button } from "@/components/ui/button"
@@ -24,12 +24,14 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { formatDistanceToNow } from "date-fns"
-import { Siren, CheckCircle, Loader2 } from "lucide-react"
+import { Siren, CheckCircle, Loader2, History } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 export default function DoctorDashboardPage() {
-  const [emergencies, setEmergencies] = useState<Emergency[]>([])
-  const [loading, setLoading] = useState(true)
+  const [activeEmergencies, setActiveEmergencies] = useState<Emergency[]>([])
+  const [resolvedEmergencies, setResolvedEmergencies] = useState<Emergency[]>([])
+  const [loadingActive, setLoadingActive] = useState(true)
+  const [loadingResolved, setLoadingResolved] = useState(true)
   const { toast } = useToast()
 
   const showBrowserNotification = (message: string, body: string) => {
@@ -55,9 +57,10 @@ export default function DoctorDashboardPage() {
       Notification.requestPermission();
     }
 
-    const q = query(collection(db, "emergencies"), where("status", "==", "active"));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const activeEmergencies: Emergency[] = [];
+    // Listener for active emergencies
+    const qActive = query(collection(db, "emergencies"), where("status", "==", "active"));
+    const unsubscribeActive = onSnapshot(qActive, (querySnapshot) => {
+      const emergencies: Emergency[] = [];
       querySnapshot.docChanges().forEach((change) => {
           if (change.type === "added") {
               const newEmergency = change.doc.data() as Emergency;
@@ -68,15 +71,29 @@ export default function DoctorDashboardPage() {
           }
       });
       querySnapshot.forEach((doc) => {
-        activeEmergencies.push({ id: doc.id, ...doc.data() } as Emergency);
+        emergencies.push({ id: doc.id, ...doc.data() } as Emergency);
       });
-      // Sort by timestamp descending
-      activeEmergencies.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      setEmergencies(activeEmergencies);
-      setLoading(false);
+      emergencies.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      setActiveEmergencies(emergencies);
+      setLoadingActive(false);
     });
+    
+    // Fetch resolved emergencies once
+    const fetchResolvedEmergencies = async () => {
+        setLoadingResolved(true);
+        const qResolved = query(collection(db, "emergencies"), where("status", "==", "resolved"), orderBy("timestamp", "desc"));
+        const querySnapshot = await getDocs(qResolved);
+        const emergencies: Emergency[] = [];
+        querySnapshot.forEach((doc) => {
+            emergencies.push({ id: doc.id, ...doc.data() } as Emergency);
+        });
+        setResolvedEmergencies(emergencies);
+        setLoadingResolved(false);
+    }
 
-    return () => unsubscribe();
+    fetchResolvedEmergencies();
+
+    return () => unsubscribeActive();
   }, []);
 
   const resolveEmergency = async (id: string) => {
@@ -87,6 +104,13 @@ export default function DoctorDashboardPage() {
         title: "Emergency Resolved",
         description: "The alert has been marked as resolved.",
       });
+      // Refetch resolved list to show the newly resolved item
+      const newActive = activeEmergencies.filter(e => e.id !== id);
+      const newlyResolved = activeEmergencies.find(e => e.id === id);
+      setActiveEmergencies(newActive);
+      if (newlyResolved) {
+        setResolvedEmergencies(prev => [{...newlyResolved, status: 'resolved'}, ...prev]);
+      }
     } catch (error) {
         console.error("Error resolving emergency: ", error);
         toast({
@@ -104,7 +128,7 @@ export default function DoctorDashboardPage() {
             <Siren className="text-destructive"/> Doctor Dashboard
         </h1>
         <p className="text-muted-foreground">
-            Active emergency alerts from employees.
+            Active and resolved emergency alerts from employees.
         </p>
       </div>
       <Card>
@@ -126,14 +150,14 @@ export default function DoctorDashboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
+              {loadingActive ? (
                 <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center">
                         <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
                     </TableCell>
                 </TableRow>
-              ) : emergencies.length > 0 ? (
-                emergencies.map((emergency) => (
+              ) : activeEmergencies.length > 0 ? (
+                activeEmergencies.map((emergency) => (
                   <TableRow key={emergency.id} className="font-medium">
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -163,6 +187,70 @@ export default function DoctorDashboardPage() {
                 <TableRow>
                   <TableCell colSpan={5} className="h-24 text-center">
                     No active emergencies.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><History/> Resolved Emergencies</CardTitle>
+          <CardDescription>
+            A log of previously attended emergencies.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Employee</TableHead>
+                <TableHead>Bay Name</TableHead>
+                <TableHead>Seat Number</TableHead>
+                <TableHead>Time</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loadingResolved ? (
+                <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                        <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
+                    </TableCell>
+                </TableRow>
+              ) : resolvedEmergencies.length > 0 ? (
+                resolvedEmergencies.map((emergency) => (
+                  <TableRow key={emergency.id} className="text-muted-foreground">
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage src={emergency.userAvatar} alt={emergency.userName} />
+                          <AvatarFallback>{emergency.userName.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <span>{emergency.userName}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{emergency.bayName}</TableCell>
+                    <TableCell>
+                        <Badge variant="outline">{emergency.seatNumber}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {formatDistanceToNow(new Date(emergency.timestamp), { addSuffix: true })}
+                    </TableCell>
+                     <TableCell>
+                      <Badge variant="default" className="bg-green-600 hover:bg-green-600/80">
+                        <CheckCircle className="mr-1 h-3 w-3"/>
+                        Resolved
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center">
+                    No resolved emergencies found.
                   </TableCell>
                 </TableRow>
               )}
