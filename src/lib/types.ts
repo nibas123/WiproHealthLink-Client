@@ -1,4 +1,6 @@
 
+import { FieldValue } from "firebase/firestore";
+
 export type UserRole = "user" | "doctor" | "it_team";
 
 export type UserProfile = {
@@ -23,3 +25,10 @@ export type Emergency = {
   timestamp: string; // ISO 8601 string
   status: 'active' | 'resolved';
 }
+
+export type Notification = {
+  id?: string;
+  userId: string;
+  message: string;
+  createdAt: FieldValue;
+};
