@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -29,7 +30,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
 // Placeholder data for the activity log
-const activities = [
+const allActivities = [
   { id: 1, type: 'Login', description: 'Successful login from new device', timestamp: new Date(2023, 6, 25, 9, 5, 0), status: 'Normal' },
   { id: 2, type: 'Break', description: 'Started a 15-minute break', timestamp: new Date(2023, 6, 25, 10, 30, 0), status: 'Normal' },
   { id: 3, type: 'Break', description: 'Ended break', timestamp: new Date(2023, 6, 25, 10, 45, 0), status: 'Normal' },
@@ -39,7 +40,6 @@ const activities = [
   { id: 7, type: 'Logout', description: 'User logged out', timestamp: new Date(2023, 6, 24, 17, 30, 0), status: 'Normal' },
 ];
 
-
 const statusColors: { [key: string]: 'default' | 'secondary' | 'destructive' } = {
   Normal: 'default',
   Info: 'secondary',
@@ -47,6 +47,17 @@ const statusColors: { [key: string]: 'default' | 'secondary' | 'destructive' } =
 };
 
 export default function ActivityLogPage() {
+  const [descriptionFilter, setDescriptionFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  
+  const filteredActivities = useMemo(() => {
+    return allActivities.filter(activity => {
+      const matchesDescription = activity.description.toLowerCase().includes(descriptionFilter.toLowerCase());
+      const matchesType = typeFilter === 'all' || activity.type.toLowerCase() === typeFilter;
+      return matchesDescription && matchesType;
+    });
+  }, [descriptionFilter, typeFilter]);
+
   return (
     <div className="grid gap-6">
       <div className="flex items-start justify-between">
@@ -66,19 +77,24 @@ export default function ActivityLogPage() {
         </CardHeader>
         <CardContent>
            <div className="flex items-center gap-4 mb-4">
-            <Input placeholder="Filter by description..." className="max-w-sm" />
-            <Select>
+            <Input 
+              placeholder="Filter by description..." 
+              className="max-w-sm"
+              value={descriptionFilter}
+              onChange={(e) => setDescriptionFilter(e.target.value)}
+            />
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by type" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="login">Login</SelectItem>
+                <SelectItem value="logout">Logout</SelectItem>
                 <SelectItem value="break">Break</SelectItem>
                 <SelectItem value="system">System</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline">Apply Filters</Button>
           </div>
           <Table>
             <TableHeader>
@@ -90,7 +106,7 @@ export default function ActivityLogPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {activities.map((activity) => (
+              {filteredActivities.map((activity) => (
                 <TableRow key={activity.id}>
                   <TableCell>
                     <Badge variant="outline">{activity.type}</Badge>
