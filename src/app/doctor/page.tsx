@@ -32,10 +32,41 @@ export default function DoctorDashboardPage() {
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
 
+  const showBrowserNotification = (message: string, body: string) => {
+    if (typeof window === 'undefined' || !("Notification" in window)) {
+      console.error("This browser does not support desktop notification");
+      return;
+    }
+
+    if (Notification.permission === "granted") {
+      new Notification(message, { body, icon: "/logo.svg" });
+    } else if (Notification.permission !== "denied") {
+      Notification.requestPermission().then((permission) => {
+        if (permission === "granted") {
+          new Notification(message, { body, icon: "/logo.svg" });
+        }
+      });
+    }
+  };
+
   useEffect(() => {
+    // Request notification permission on mount
+    if (typeof window !== 'undefined' && "Notification" in window) {
+      Notification.requestPermission();
+    }
+
     const q = query(collection(db, "emergencies"), where("status", "==", "active"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const activeEmergencies: Emergency[] = [];
+      querySnapshot.docChanges().forEach((change) => {
+          if (change.type === "added") {
+              const newEmergency = change.doc.data() as Emergency;
+              showBrowserNotification(
+                  `🚨 New Emergency: ${newEmergency.userName}`, 
+                  `Location: ${newEmergency.bayName}, Seat: ${newEmergency.seatNumber}`
+              );
+          }
+      });
       querySnapshot.forEach((doc) => {
         activeEmergencies.push({ id: doc.id, ...doc.data() } as Emergency);
       });
