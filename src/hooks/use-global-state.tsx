@@ -1,7 +1,8 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { collection, doc, onSnapshot, updateDoc, addDoc, query, orderBy } from 'firebase/firestore';
+import { collection, doc, onSnapshot, updateDoc, addDoc, query, orderBy, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { MedicalHistory, EmergencyAlert } from '@/lib/types';
 import { medicalHistory as initialMedicalHistory } from '@/lib/data';
@@ -18,7 +19,7 @@ interface GlobalState {
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 
 export const GlobalStateProvider = ({ children }: { children: ReactNode }) => {
-  const [medicalHistory, setMedicalHistory] = useState<MedicalHistory>(initialMedicalHistory);
+  const [medicalHistory, setMedicalHistoryState] = useState<MedicalHistory>(initialMedicalHistory);
   const [alerts, setAlerts] = useState<EmergencyAlert[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,7 +29,11 @@ export const GlobalStateProvider = ({ children }: { children: ReactNode }) => {
     const medicalHistoryDocRef = doc(db, 'medicalHistory', 'user-jane-doe');
     const unsubHistory = onSnapshot(medicalHistoryDocRef, (doc) => {
       if (doc.exists()) {
-        setMedicalHistory(doc.data() as MedicalHistory);
+        setMedicalHistoryState(doc.data() as MedicalHistory);
+      } else {
+        // If doc doesn't exist, create it with initial data
+        setDoc(medicalHistoryDocRef, initialMedicalHistory);
+        setMedicalHistoryState(initialMedicalHistory);
       }
       setLoading(false);
     });
@@ -49,7 +54,8 @@ export const GlobalStateProvider = ({ children }: { children: ReactNode }) => {
 
   const handleSetMedicalHistory = async (historyUpdate: Partial<MedicalHistory>) => {
     const docRef = doc(db, 'medicalHistory', 'user-jane-doe');
-    await updateDoc(docRef, historyUpdate);
+    // Use set with merge to create if it doesn't exist, or update if it does.
+    await setDoc(docRef, historyUpdate, { merge: true });
   };
 
   const addAlert = async (alertData: Omit<EmergencyAlert, 'id' | 'timestamp' | 'status'>) => {
