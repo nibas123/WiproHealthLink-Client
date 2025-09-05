@@ -1,8 +1,8 @@
 
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { AlertTriangle, Wifi, MapPin, Building, Loader2, HeartPulse, Pill, ShieldAlert, Users, Bell, Timer } from "lucide-react"
+import { useState } from "react"
+import { AlertTriangle, Wifi, MapPin, Building, Loader2, HeartPulse, Pill, ShieldAlert, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -27,83 +27,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-
-function BreakReminderCard() {
-    const { toast } = useToast();
-    const [isTimerRunning, setIsTimerRunning] = useState(false);
-    const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
-    const [intervalDuration, setIntervalDuration] = useState(30); // Default 30 seconds
-
-    const showBreakToast = useCallback(() => {
-        toast({
-            title: "Take a Break!",
-            description: "It's time to step away from the screen for a few minutes.",
-        });
-    }, [toast]);
-
-    useEffect(() => {
-        if (isTimerRunning) {
-            const id = setInterval(showBreakToast, intervalDuration * 1000);
-            setIntervalId(id);
-        } else {
-            if (intervalId) {
-                clearInterval(intervalId);
-                setIntervalId(null);
-            }
-        }
-
-        return () => {
-            if (intervalId) {
-                clearInterval(intervalId);
-            }
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isTimerRunning, intervalDuration, showBreakToast]);
-
-
-    const toggleTimer = () => {
-        setIsTimerRunning(prev => !prev);
-    };
-
-    return (
-         <Card>
-            <CardHeader>
-                <CardTitle>Break Reminders</CardTitle>
-                <CardDescription>
-                    Manually trigger or automate break notifications.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="flex items-center space-x-4">
-                    <Button onClick={showBreakToast} variant="outline" className="w-full">
-                        <Bell className="mr-2" /> Send Manual Alert
-                    </Button>
-                    <Button onClick={toggleTimer} className="w-full">
-                       <Timer className="mr-2" /> {isTimerRunning ? 'Stop Timer' : 'Start Timer'}
-                    </Button>
-                </div>
-                <div className="hidden">
-                    {/* This component is hidden from the user, used to mock the AI signal */}
-                    <Label htmlFor="timer-config">Timer Interval (seconds)</Label>
-                    <Input 
-                        id="timer-config"
-                        type="number"
-                        value={intervalDuration}
-                        onChange={(e) => setIntervalDuration(Number(e.target.value))}
-                        placeholder="Set interval in seconds"
-                    />
-                </div>
-                 {isTimerRunning && (
-                    <p className="text-sm text-center text-muted-foreground">
-                        You will be notified every {intervalDuration} seconds to take a break.
-                    </p>
-                )}
-            </CardContent>
-        </Card>
-    );
-}
 
 export default function DashboardPage() {
   const { userProfile } = useAuth()
@@ -216,7 +139,6 @@ export default function DashboardPage() {
         </Card>
 
         <div className="grid gap-6 md:grid-cols-2">
-          <BreakReminderCard />
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2"><ShieldAlert className="text-destructive"/>Allergies</CardTitle>
@@ -275,3 +197,4 @@ export default function DashboardPage() {
         </div>
     </div>
   )
+}
