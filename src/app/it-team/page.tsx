@@ -2,8 +2,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { collection, query, where, onSnapshot, doc, updateDoc, addDoc } from "firebase/firestore"
-import { db } from "@/lib/firebase"
+import { collection, query, where, onSnapshot, doc, updateDoc, setDoc } from "firebase/firestore"
+import { db, auth } from "@/lib/firebase"
+import { createUserWithEmailAndPassword } from "firebase/auth"
 import type { Emergency, UserProfile } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import {
@@ -26,7 +27,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { formatDistanceToNow } from "date-fns"
 import { Monitor, CheckCircle, Loader2, UserPlus } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { useAuth } from "@/hooks/use-auth"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -62,7 +62,7 @@ const createUserSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
-  role: z.enum(["user", "doctor"], { required_error: "Please select a role." }),
+  role: z.enum(["user", "doctor", "it_team"], { required_error: "Please select a role." }),
   bayName: z.string().optional(),
   seatNumber: z.string().optional(),
   wifiName: z.string().optional(),
@@ -214,25 +214,14 @@ function CreateUserDialog({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
     });
     const role = form.watch("role");
 
-    // This is a workaround for client-side user creation.
-    // A proper implementation would use a backend function.
     const handleCreateUser = async (values: z.infer<typeof createUserSchema>) => {
         setLoading(true);
         try {
-            // We use a separate function to create the user to avoid logging out the admin.
-            // This is a conceptual workaround.
-            const userCredential = await fetch('/api/create-user', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(values)
-            })
-
-            if(!userCredential.ok) {
-              const error = await userCredential.json();
-              throw new Error(error.message || 'Failed to create user.');
-            }
-            
-            const { user } = await userCredential.json();
+            // NOTE: This will sign out the current admin user. This is a limitation
+            // of using the client-side SDK for user management.
+            // A production app would use a Cloud Function for this.
+            const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+            const user = userCredential.user;
 
             const userProfileData: Omit<UserProfile, 'uid' | 'avatar'> = {
                 name: values.name,
@@ -250,7 +239,7 @@ function CreateUserDialog({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
 
             toast({
                 title: "User Created Successfully",
-                description: `An account for ${values.name} has been created.`,
+                description: `An account for ${values.name} has been created. You have been logged out. Please log back in.`,
             });
             form.reset();
             onOpenChange(false);
@@ -259,7 +248,7 @@ function CreateUserDialog({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
             toast({
                 variant: "destructive",
                 title: "User Creation Failed",
-                description: error.message || "An unknown error occurred. The admin may have been logged out.",
+                description: error.message || "An unknown error occurred. You may need to log back in.",
             });
         } finally {
             setLoading(false);
@@ -333,11 +322,12 @@ function CreateUserDialog({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
                                         <FormControl>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select a role" />
-                                            </SelectTrigger>
+                                            </Trigger>
                                         </FormControl>
                                         <SelectContent>
                                             <SelectItem value="user">Employee</SelectItem>
                                             <SelectItem value="doctor">Doctor</SelectItem>
+                                            <SelectItem value="it_team">IT Team</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />
@@ -402,4 +392,3 @@ function CreateUserDialog({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
         </Dialog>
     );
 }
-

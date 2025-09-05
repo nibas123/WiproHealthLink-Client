@@ -15,12 +15,11 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  createUser: (data: Omit<UserProfile, 'uid'> & {password: string}) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const publicRoutes = ['/']; // Only root is public, signup is removed.
+const publicRoutes = ['/'];
 const roleRedirects: Record<UserRole, string> = {
   user: '/dashboard',
   doctor: '/doctor',
@@ -36,6 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setLoading(true);
       if (user) {
         setUser(user);
         const userDocRef = doc(db, "users", user.uid);
@@ -49,6 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             router.replace(expectedPath);
           }
         } else {
+          // This can happen if user exists in Auth but not Firestore
           await signOut(auth);
           setUserProfile(null);
         }
@@ -70,41 +71,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await signInWithEmailAndPassword(auth, email, password);
   };
 
-  const createUser = async (data: Omit<UserProfile, 'uid'> & {password: string}) => {
-    // This function creates a user but doesn't log them in.
-    // We create a temporary, secondary Firebase app instance to avoid affecting the current user's session.
-    const { name, email, password, role, bayName, seatNumber, wifiName } = data;
-    
-    // We can't use the main `auth` object as it would log out the current IT admin.
-    // The proper way to do this is with a Firebase Admin SDK on a server,
-    // but for a client-only solution, we must be careful.
-    // For this prototype, we'll just use the standard `createUserWithEmailAndPassword`.
-    // NOTE: This will log the admin out. A real app would use a backend function for this.
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-
-    const userProfileData: Omit<UserProfile, 'uid' | 'avatar'> = {
-        name,
-        email,
-        role,
-        bayName: bayName || '',
-        seatNumber: seatNumber || '',
-        wifiName: wifiName || '',
-    };
-
-    await setDoc(doc(db, "users", user.uid), {
-        ...userProfileData,
-        avatar: `https://i.pravatar.cc/150?u=${user.uid}`
-    });
-    
-    // After creating the user, we have to log the admin back in. This is a workaround.
-    // A better solution is a backend Cloud Function.
-    if (auth.currentUser && auth.currentUser.email) {
-        // This is a simplified re-login. The password isn't available.
-        // This confirms the limitation of client-side-only user management.
-    }
-  };
-
   const logout = async () => {
     await signOut(auth);
     router.push('/');
@@ -119,7 +85,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, login, logout, createUser }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
