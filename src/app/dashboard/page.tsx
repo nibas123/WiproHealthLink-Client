@@ -29,6 +29,18 @@ import {
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 
+const severityVariantMap: { [key: string]: 'default' | 'secondary' | 'destructive' } = {
+  severe: 'destructive',
+  high: 'destructive',
+  medium: 'secondary',
+  low: 'default',
+};
+
+const conditionVariantMap: { [key: string]: 'default' | 'secondary' | 'outline' } = {
+  managed: 'secondary',
+  active: 'outline',
+};
+
 export default function DashboardPage() {
   const { userProfile } = useAuth()
   const [loading, setLoading] = useState(false)
@@ -148,12 +160,18 @@ export default function DashboardPage() {
               </Button>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-3">
-                  <li className="flex justify-between items-center"><span className="font-medium">Penicillin</span><Badge variant="destructive">Severe</Badge></li>
-                  <li className="flex justify-between items-center"><span className="font-medium">Peanuts</span><Badge variant="destructive" className="bg-orange-500 hover:bg-orange-500/80">High</Badge></li>
-                  <li className="flex justify-between items-center"><span className="font-medium">Dust Mites</span><Badge variant="secondary" className="bg-yellow-400 text-yellow-900 hover:bg-yellow-400/80">Low</Badge></li>
-              </ul>
-              <p className="text-xs text-muted-foreground mt-4">Details are placeholder. Editing coming soon.</p>
+                {userProfile.allergies && userProfile.allergies.length > 0 ? (
+                    <ul className="space-y-3">
+                        {userProfile.allergies.map((allergy, index) => (
+                            <li key={index} className="flex justify-between items-center">
+                                <span className="font-medium">{allergy.name}</span>
+                                <Badge variant={severityVariantMap[allergy.severity.toLowerCase()] || 'default'}>{allergy.severity}</Badge>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="text-sm text-muted-foreground">No allergies listed. Click 'Edit' to add them.</p>
+                )}
             </CardContent>
           </Card>
           <Card>
@@ -164,12 +182,18 @@ export default function DashboardPage() {
               </Button>
             </CardHeader>
             <CardContent>
-               <ul className="space-y-3">
-                  <li className="flex justify-between items-center"><span className="font-medium">Lisinopril</span><span className="text-muted-foreground text-sm">10mg Daily</span></li>
-                  <li className="flex justify-between items-center"><span className="font-medium">Metformin</span><span className="text-muted-foreground text-sm">500mg Twice Daily</span></li>
-                  <li className="flex justify-between items-center"><span className="font-medium">Ventolin Inhaler</span><span className="text-muted-foreground text-sm">As needed</span></li>
-              </ul>
-               <p className="text-xs text-muted-foreground mt-4">Details are placeholder. Editing coming soon.</p>
+               {userProfile.medications && userProfile.medications.length > 0 ? (
+                    <ul className="space-y-3">
+                        {userProfile.medications.map((medication, index) => (
+                            <li key={index} className="flex justify-between items-center">
+                                <span className="font-medium">{medication.name}</span>
+                                <span className="text-muted-foreground text-sm">{medication.dosage}</span>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="text-sm text-muted-foreground">No medications listed. Click 'Edit' to add them.</p>
+                )}
             </CardContent>
           </Card>
            <Card>
@@ -180,12 +204,18 @@ export default function DashboardPage() {
               </Button>
             </CardHeader>
             <CardContent>
-               <ul className="space-y-3">
-                  <li className="flex justify-between items-center"><span className="font-medium">Hypertension</span><Badge variant="secondary">Managed</Badge></li>
-                  <li className="flex justify-between items-center"><span className="font-medium">Type 2 Diabetes</span><Badge variant="secondary">Managed</Badge></li>
-                  <li className="flex justify-between items-center"><span className="font-medium">Asthma</span><Badge variant="outline">Active</Badge></li>
-              </ul>
-               <p className="text-xs text-muted-foreground mt-4">Details are placeholder. Editing coming soon.</p>
+               {userProfile.conditions && userProfile.conditions.length > 0 ? (
+                    <ul className="space-y-3">
+                        {userProfile.conditions.map((condition, index) => (
+                            <li key={index} className="flex justify-between items-center">
+                                <span className="font-medium">{condition.name}</span>
+                                <Badge variant={conditionVariantMap[condition.status.toLowerCase()] || 'outline'}>{condition.status}</Badge>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="text-sm text-muted-foreground">No conditions listed. Click 'Edit' to add them.</p>
+                )}
             </CardContent>
           </Card>
            <Card>
@@ -196,11 +226,18 @@ export default function DashboardPage() {
               </Button>
             </CardHeader>
             <CardContent>
-                <ul className="space-y-3">
-                  <li className="flex justify-between items-center"><span className="font-medium">John Doe <span className="text-sm text-muted-foreground">(Spouse)</span></span><span className="text-muted-foreground text-sm">555-123-4567</span></li>
-                  <li className="flex justify-between items-center"><span className="font-medium">Dr. Emily Carter <span className="text-sm text-muted-foreground">(Physician)</span></span><span className="text-muted-foreground text-sm">555-987-6543</span></li>
-              </ul>
-               <p className="text-xs text-muted-foreground mt-4">Details are placeholder. Editing coming soon.</p>
+                {userProfile.emergencyContacts && userProfile.emergencyContacts.length > 0 ? (
+                    <ul className="space-y-3">
+                        {userProfile.emergencyContacts.map((contact, index) => (
+                            <li key={index} className="flex justify-between items-center">
+                                <span className="font-medium">{contact.name} <span className="text-sm text-muted-foreground">({contact.relationship})</span></span>
+                                <span className="text-muted-foreground text-sm">{contact.phone}</span>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="text-sm text-muted-foreground">No contacts listed. Click 'Edit' to add them.</p>
+                )}
             </CardContent>
           </Card>
         </div>

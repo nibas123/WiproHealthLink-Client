@@ -3,6 +3,27 @@ import { FieldValue } from "firebase/firestore";
 
 export type UserRole = "user" | "doctor" | "it_team";
 
+export type Allergy = {
+  name: string;
+  severity: string;
+};
+
+export type Medication = {
+  name: string;
+  dosage: string;
+};
+
+export type Condition = {
+  name: string;
+  status: string;
+};
+
+export type EmergencyContact = {
+  name:string;
+  relationship: string;
+  phone: string;
+};
+
 export type UserProfile = {
   uid: string;
   name: string;
@@ -12,6 +33,10 @@ export type UserProfile = {
   seatNumber?: string;
   wifiName?: string;
   avatar: string;
+  allergies?: Allergy[];
+  medications?: Medication[];
+  conditions?: Condition[];
+  emergencyContacts?: EmergencyContact[];
 };
 
 export type Emergency = {
