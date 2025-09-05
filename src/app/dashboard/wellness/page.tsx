@@ -157,7 +157,7 @@ export default function WellnessPage() {
                           const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
                           return (
                             <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central">
-                              {`${(percent * 100).toFixed(0)}%`}
+                              {`%${(percent * 100).toFixed(0)}%`}
                             </text>
                           );
                         }}
