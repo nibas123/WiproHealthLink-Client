@@ -12,13 +12,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { User } from "@/lib/types"
+import { useGlobalState } from "@/hooks/use-global-state"
 
 interface UserNavProps {
     user: User;
 }
 
 export function UserNav({ user }: UserNavProps) {
+  const { setCurrentUser } = useGlobalState();
   const userInitials = user.name.split(' ').map(n => n[0]).join('');
+
+  const handleLogout = () => {
+    setCurrentUser(null)
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -50,7 +57,7 @@ export function UserNav({ user }: UserNavProps) {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <Link href="/">
+        <Link href="/" onClick={handleLogout}>
             <DropdownMenuItem>
                 Log out
                 <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>

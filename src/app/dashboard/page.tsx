@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Bell, HeartPulse, Pill, Users, PlusCircle, Trash2, ShieldCheck, TrendingUp, Sparkles } from "lucide-react"
+import { Bell, HeartPulse, Pill, Users, PlusCircle, Trash2, ShieldCheck, TrendingUp, Sparkles, User, FileClock } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import {
@@ -9,6 +9,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription
 } from "@/components/ui/card"
 import {
   Dialog,
@@ -20,7 +21,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog"
-import { user, wellnessData } from "@/lib/data"
+import { wellnessData } from "@/lib/data"
 import { EmergencyAlertButton } from "@/components/emergency-alert-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -32,13 +33,17 @@ type EditableSection = 'allergies' | 'medications' | 'conditions' | 'contacts' |
 const breakCompliancePercentage = (wellnessData.breakCompliance.taken / wellnessData.breakCompliance.recommended) * 100
 
 export default function DashboardPage() {
-  const { medicalHistory, setMedicalHistory } = useGlobalState();
+  const { currentUser, medicalHistory, setMedicalHistory } = useGlobalState();
   const [editingSection, setEditingSection] = useState<EditableSection>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const openDialog = (section: EditableSection) => {
     setEditingSection(section);
     setDialogOpen(true);
+  }
+
+  if (!currentUser || !medicalHistory) {
+      return <div>Loading user data...</div>
   }
 
   const handleAllergyChange = (index: number, field: keyof Allergy, value: string) => {
@@ -107,6 +112,8 @@ export default function DashboardPage() {
 
 
   const renderEditForm = () => {
+    if (!medicalHistory) return null;
+    
     switch (editingSection) {
       case 'allergies':
         return (
@@ -231,7 +238,7 @@ export default function DashboardPage() {
         <div className="flex items-start justify-between space-y-2">
           <div>
             <h1 className="text-3xl font-bold tracking-tight font-headline">
-              Welcome back, {user.name.split(" ")[0]}!
+              Welcome back, {currentUser.name.split(" ")[0]}!
             </h1>
             <p className="text-muted-foreground">
               Here&apos;s a summary of your health and wellness profile.
@@ -242,73 +249,69 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Card className="lg:col-span-1">
-             <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-primary">
-                    <Sparkles /> Welcome to HealthLink
-                </CardTitle>
-             </CardHeader>
-             <CardContent className="flex flex-col gap-4">
-                <p className="text-sm text-muted-foreground">
-                    This is your central hub for managing both your critical medical information and your digital wellness habits.
-                </p>
-                <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg border">
-                    <ShieldCheck className="w-6 h-6 text-primary mt-1 shrink-0"/>
-                    <div>
-                        <h4 className="font-semibold">Medical Profile</h4>
-                        <p className="text-xs text-muted-foreground">Securely store your medical history for emergencies.</p>
-                    </div>
-                </div>
-                 <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg border">
-                    <TrendingUp className="w-6 h-6 text-accent mt-1 shrink-0"/>
-                    <div>
-                        <h4 className="font-semibold">Digital Wellness</h4>
-                        <p className="text-xs text-muted-foreground">Track your computer usage and get reminders to take breaks.</p>
-                    </div>
-                </div>
-             </CardContent>
-          </Card>
-          <div className="lg:col-span-2 grid gap-6 md:grid-cols-2">
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-lg font-medium flex items-center gap-2">
-                    <HeartPulse className="text-accent"/> Wellness Score
-                </CardTitle>
-                 <Button variant="outline" size="sm" asChild>
-                    <Link href="/dashboard/wellness">View Details</Link>
-                </Button>
+            <Card className="lg:col-span-1">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-primary">
+                        <Sparkles /> Welcome to HealthLink
+                    </CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <p className="text-sm text-muted-foreground mb-2">Your break compliance today.</p>
-                    <div className="flex items-center gap-4">
-                        <div
-                            className="relative flex h-24 w-24 items-center justify-center rounded-full bg-muted"
-                        >
-                            <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
-                                <circle
-                                    className="stroke-current text-border"
-                                    cx="18" cy="18" r="16"
-                                    strokeWidth="2" fill="none"
-                                />
-                                <circle
-                                    className="stroke-current text-primary"
-                                    cx="18" cy="18" r="16"
-                                    strokeWidth="2" fill="none"
-                                    strokeDasharray={`${breakCompliancePercentage}, 100`}
-                                />
-                            </svg>
-                            <div className="absolute flex flex-col items-center justify-center">
-                                <span className="text-2xl font-bold">{Math.round(breakCompliancePercentage)}%</span>
-                            </div>
+                <CardContent className="flex flex-col gap-4">
+                    <p className="text-sm text-muted-foreground">
+                        This is your central hub for managing both your critical medical information and your digital wellness habits.
+                    </p>
+                    <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg border">
+                        <ShieldCheck className="w-6 h-6 text-primary mt-1 shrink-0"/>
+                        <div>
+                            <h4 className="font-semibold">Medical Profile</h4>
+                            <p className="text-xs text-muted-foreground">Securely store your medical history for emergencies.</p>
                         </div>
-                        <div className="flex flex-col">
-                            <p><span className="font-bold">{wellnessData.breakCompliance.taken}</span> breaks taken</p>
-                            <p><span className="font-bold">{wellnessData.breakCompliance.recommended}</span> recommended</p>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg border">
+                        <TrendingUp className="w-6 h-6 text-accent mt-1 shrink-0"/>
+                        <div>
+                            <h4 className="font-semibold">Digital Wellness</h4>
+                            <p className="text-xs text-muted-foreground">Track your computer usage and get reminders to take breaks.</p>
                         </div>
                     </div>
                 </CardContent>
             </Card>
-            <Card>
+         
+            <Card className="lg:col-span-2">
+                 <CardHeader>
+                    <CardTitle>Your Information</CardTitle>
+                    <CardDescription>A quick overview of your profile.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-6 md:grid-cols-2">
+                     <Card>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-base font-medium flex items-center gap-2">
+                                <User className="text-primary"/> Personal Details
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-sm space-y-1">
+                            <p className="font-semibold">{currentUser.name}</p>
+                            <p className="text-muted-foreground">{currentUser.email}</p>
+                             <p className="text-muted-foreground">{currentUser.role}</p>
+                        </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-base font-medium flex items-center gap-2">
+                                <FileClock className="text-primary"/> Medical History
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-sm space-y-1">
+                           <p><span className="font-semibold">{medicalHistory.allergies.length}</span> Allergies</p>
+                           <p><span className="font-semibold">{medicalHistory.conditions.length}</span> Conditions</p>
+                           <p><span className="font-semibold">{medicalHistory.medications.length}</span> Medications</p>
+                        </CardContent>
+                    </Card>
+                </CardContent>
+            </Card>
+
+        </div>
+         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
                   <Bell className="text-destructive" /> Allergies
@@ -334,7 +337,7 @@ export default function DashboardPage() {
                 </ul>
               </CardContent>
             </Card>
-            <Card>
+             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
                   <Pill className="text-primary" /> Medications
@@ -361,6 +364,32 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
             <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-lg font-medium flex items-center gap-2">
+                        <HeartPulse className="text-accent" /> Conditions
+                    </CardTitle>
+                    <Button variant="outline" size="sm" onClick={() => openDialog('conditions')}>Edit</Button>
+                </CardHeader>
+                <CardContent>
+                    <ul className="space-y-2">
+                        {medicalHistory.conditions.slice(0, 2).map((condition) => (
+                            <li key={condition.name} className="flex justify-between items-start">
+                                <div>
+                                    <p className="font-medium">{condition.name}</p>
+                                </div>
+                                <span className="text-sm text-muted-foreground">{condition.status}</span>
+                            </li>
+                        ))}
+                         {medicalHistory.conditions.length > 2 && (
+                           <li className="text-sm text-muted-foreground pt-1">+ {medicalHistory.conditions.length - 2} more</li>
+                        )}
+                        {medicalHistory.conditions.length === 0 && (
+                           <li className="text-sm text-muted-foreground pt-1">No conditions listed.</li>
+                        )}
+                    </ul>
+                </CardContent>
+            </Card>
+            <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
                   <Users className="text-primary" /> Contacts
@@ -377,6 +406,9 @@ export default function DashboardPage() {
                       <span className="text-sm text-muted-foreground">{contact.relationship}</span>
                     </li>
                   ))}
+                   {medicalHistory.emergencyContacts.length > 2 && (
+                       <li className="text-sm text-muted-foreground pt-1">+ {medicalHistory.emergencyContacts.length - 2} more</li>
+                    )}
                   {medicalHistory.emergencyContacts.length === 0 && (
                      <li className="text-sm text-muted-foreground pt-1">No contacts listed.</li>
                   )}
@@ -384,13 +416,12 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </div>
-        </div>
       </div>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>{getDialogTitle()}</DialogTitle>
            <DialogDescription>
-            Add, edit, or remove entries for this section. Your changes will be saved automatically.
+            Add, edit, or remove entries for this section. Your changes will be saved automatically to your profile.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 max-h-[60vh] overflow-y-auto">

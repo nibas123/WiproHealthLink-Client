@@ -1,31 +1,20 @@
 import type { User, MedicalHistory, ActivityLog, WellnessData, EmergencyAlert } from './types';
 
-export const user: User = {
-  name: 'Jane Doe',
-  email: 'jane.doe@wipro.com',
-  role: 'Staff',
-  avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
-};
-
+// This is now used as a template for new users, not as static data for one user.
 export const medicalHistory: MedicalHistory = {
   allergies: [
     { name: 'Penicillin', severity: 'Severe', details: 'Causes anaphylactic shock.' },
     { name: 'Peanuts', severity: 'High', details: 'Causes hives and difficulty breathing.' },
-    { name: 'Dust Mites', severity: 'Low', details: 'Causes mild hay fever symptoms.' },
   ],
   medications: [
     { name: 'Lisinopril', dosage: '10mg Daily', reason: 'High Blood Pressure' },
-    { name: 'Metformin', dosage: '500mg Twice Daily', reason: 'Type 2 Diabetes' },
-    { name: 'Ventolin Inhaler', dosage: 'As needed', reason: 'Asthma' },
   ],
   conditions: [
     { name: 'Hypertension', diagnosed: '2018-05-20', status: 'Managed' },
-    { name: 'Type 2 Diabetes', diagnosed: '2020-01-15', status: 'Managed' },
     { name: 'Asthma', diagnosed: '2005-09-10', status: 'Active' },
   ],
   emergencyContacts: [
     { name: 'John Doe', relationship: 'Spouse', phone: '555-123-4567' },
-    { name: 'Dr. Emily Carter', relationship: 'Primary Care Physician', phone: '555-987-6543' },
   ],
 };
 

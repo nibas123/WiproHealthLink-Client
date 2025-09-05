@@ -1,17 +1,19 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { collection, doc, onSnapshot, updateDoc, addDoc, query, orderBy, setDoc } from 'firebase/firestore';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import { collection, doc, onSnapshot, updateDoc, addDoc, query, orderBy, setDoc, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { MedicalHistory, EmergencyAlert } from '@/lib/types';
+import type { MedicalHistory, EmergencyAlert, User } from '@/lib/types';
 import { medicalHistory as initialMedicalHistory } from '@/lib/data';
 
 interface GlobalState {
-  medicalHistory: MedicalHistory;
+  currentUser: User | null;
+  setCurrentUser: (user: User | null) => void;
+  users: User[];
+  medicalHistory: MedicalHistory | null;
   setMedicalHistory: (history: Partial<MedicalHistory>) => Promise<void>;
   alerts: EmergencyAlert[];
-  setAlerts: (alerts: EmergencyAlert[]) => void; // This will be used for local updates, firebase will handle backend
   addAlert: (alert: Omit<EmergencyAlert, 'id' | 'timestamp' | 'status'>) => Promise<void>;
   acknowledgeAlert: (id: string) => Promise<void>;
 }
@@ -19,42 +21,70 @@ interface GlobalState {
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 
 export const GlobalStateProvider = ({ children }: { children: ReactNode }) => {
-  const [medicalHistory, setMedicalHistoryState] = useState<MedicalHistory>(initialMedicalHistory);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [medicalHistory, setMedicalHistoryState] = useState<MedicalHistory | null>(null);
   const [alerts, setAlerts] = useState<EmergencyAlert[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch initial data and set up listeners
+  // Fetch all users once
   useEffect(() => {
-    // There is only one medical history document, with a known ID
-    const medicalHistoryDocRef = doc(db, 'medicalHistory', 'user-jane-doe');
-    const unsubHistory = onSnapshot(medicalHistoryDocRef, (doc) => {
-      if (doc.exists()) {
-        setMedicalHistoryState(doc.data() as MedicalHistory);
-      } else {
-        // If doc doesn't exist, create it with initial data
-        setDoc(medicalHistoryDocRef, initialMedicalHistory);
-        setMedicalHistoryState(initialMedicalHistory);
+    const fetchUsers = async () => {
+      try {
+        const usersCollectionRef = collection(db, 'users');
+        const userSnapshot = await getDocs(usersCollectionRef);
+        const usersList = userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        setUsers(usersList);
+      } catch (error) {
+        console.error("Error fetching users:", error);
       }
-      setLoading(false);
-    });
+    };
+    fetchUsers();
+  }, []);
 
+  // Set up listeners for alerts
+  useEffect(() => {
     const alertsCollectionRef = collection(db, 'alerts');
     const q = query(alertsCollectionRef, orderBy('timestamp', 'desc'));
     const unsubAlerts = onSnapshot(q, (snapshot) => {
       const alertsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as EmergencyAlert));
       setAlerts(alertsData);
+      setLoading(false)
+    }, (error) => {
+        console.error("Error fetching alerts:", error);
+        setLoading(false);
     });
 
-    // Cleanup listeners on unmount
-    return () => {
-      unsubHistory();
-      unsubAlerts();
-    };
+    return () => unsubAlerts();
   }, []);
 
+  // Listener for the current user's medical history
+  useEffect(() => {
+    if (!currentUser) {
+      setMedicalHistoryState(null);
+      return;
+    }
+
+    const medicalHistoryDocRef = doc(db, 'medicalHistory', currentUser.id);
+    const unsubHistory = onSnapshot(medicalHistoryDocRef, (doc) => {
+      if (doc.exists()) {
+        setMedicalHistoryState(doc.data() as MedicalHistory);
+      } else {
+        // If doc doesn't exist for the user, create it with initial data
+        const newHistory = { ...initialMedicalHistory };
+        setDoc(medicalHistoryDocRef, newHistory);
+        setMedicalHistoryState(newHistory);
+      }
+    }, (error) => {
+        console.error("Error fetching medical history:", error);
+    });
+    
+    return () => unsubHistory();
+  }, [currentUser]);
+
   const handleSetMedicalHistory = async (historyUpdate: Partial<MedicalHistory>) => {
-    const docRef = doc(db, 'medicalHistory', 'user-jane-doe');
-    // Use set with merge to create if it doesn't exist, or update if it does.
+    if (!currentUser) return;
+    const docRef = doc(db, 'medicalHistory', currentUser.id);
     await setDoc(docRef, historyUpdate, { merge: true });
   };
 
@@ -70,19 +100,26 @@ export const GlobalStateProvider = ({ children }: { children: ReactNode }) => {
     const docRef = doc(db, 'alerts', id);
     await updateDoc(docRef, { status: 'Acknowledged' });
   };
-  
-  const setAlertsLocally = (newAlerts: EmergencyAlert[]) => {
-      setAlerts(newAlerts);
-  }
 
-
-  if (loading) {
-      // You can return a loading spinner here
-      return <div>Loading...</div>
+  if (loading && users.length === 0) {
+      return (
+          <div className="w-full h-screen flex items-center justify-center">
+              <p>Loading application data...</p>
+          </div>
+      )
   }
 
   return (
-    <GlobalStateContext.Provider value={{ medicalHistory, setMedicalHistory: handleSetMedicalHistory, alerts, setAlerts: setAlertsLocally, addAlert, acknowledgeAlert }}>
+    <GlobalStateContext.Provider value={{ 
+        currentUser, 
+        setCurrentUser, 
+        users,
+        medicalHistory, 
+        setMedicalHistory: handleSetMedicalHistory, 
+        alerts, 
+        addAlert, 
+        acknowledgeAlert 
+    }}>
       {children}
     </GlobalStateContext.Provider>
   );

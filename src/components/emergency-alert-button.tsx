@@ -17,11 +17,10 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { useGlobalState } from "@/hooks/use-global-state"
-import { user } from "@/lib/data"
 
 
 export function EmergencyAlertButton() {
-  const { medicalHistory, addAlert } = useGlobalState()
+  const { currentUser, medicalHistory, addAlert } = useGlobalState()
   const [loading, setLoading] = useState(false)
   const [location, setLocation] = useState<string | null>(null)
   const [summary, setSummary] = useState<string | null>(null)
@@ -33,6 +32,12 @@ export function EmergencyAlertButton() {
     setError(null)
     setSummary(null)
     setLocation(null)
+
+    if (!medicalHistory) {
+        setError("Medical history not loaded yet.")
+        setLoading(false)
+        return
+    }
 
     // 1. Get location
     if (!navigator.geolocation) {
@@ -74,10 +79,11 @@ export function EmergencyAlertButton() {
   }
   
   const sendAlert = async () => {
-    if (!summary || !location) return
+    if (!summary || !location || !currentUser) return
 
     await addAlert({
-        employeeName: user.name,
+        employeeId: currentUser.id,
+        employeeName: currentUser.name,
         location: location,
         summary: summary,
     });

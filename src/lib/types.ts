@@ -1,4 +1,5 @@
 export type User = {
+  id: string;
   name: string;
   email: string;
   role?: 'Admin' | 'Doctor' | 'Staff';
@@ -65,6 +66,7 @@ export type WellnessData = {
 
 export type EmergencyAlert = {
     id: string;
+    employeeId: string;
     employeeName: string;
     location: string;
     timestamp: string;

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Activity, Heart, LayoutDashboard } from "lucide-react"
 
 import {
@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/sidebar"
 import { Logo } from "@/components/icons"
 import { UserNav } from "@/components/user-nav"
-import { user } from "@/lib/data"
+import { useGlobalState } from "@/hooks/use-global-state"
+import { useEffect } from "react"
 
 const menuItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -31,6 +32,22 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const router = useRouter()
+  const { currentUser } = useGlobalState()
+
+  useEffect(() => {
+    if (!currentUser) {
+      router.push('/')
+    }
+  }, [currentUser, router])
+
+  if (!currentUser) {
+    return (
+        <div className="flex items-center justify-center h-screen">
+            <p>Loading...</p>
+        </div>
+    )
+  }
 
   return (
       <SidebarProvider>
@@ -62,7 +79,7 @@ export default function DashboardLayout({
             <div className="w-full flex-1">
               {/* Can add breadcrumbs or page title here */}
             </div>
-            <UserNav user={user} />
+            <UserNav user={currentUser} />
           </header>
           <main className="flex-1 p-4 sm:px-6 sm:py-0 md:p-6 bg-background">
             {children}
