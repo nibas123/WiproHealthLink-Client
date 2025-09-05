@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, type User } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import type { UserProfile, UserRole } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
@@ -26,6 +26,20 @@ const roleRedirects: Record<UserRole, string> = {
   doctor: '/doctor',
   it_team: '/it-team',
 };
+
+const logActivity = async (userId: string, type: 'Login' | 'Logout', description: string) => {
+    try {
+        await addDoc(collection(db, "activity_log"), {
+            userId,
+            type,
+            description,
+            timestamp: serverTimestamp(),
+            status: 'Normal'
+        });
+    } catch (error) {
+        console.error("Error logging activity: ", error);
+    }
+}
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -59,6 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
 
         } else {
+          // If no profile, treat as logged out
           await signOut(auth);
           setUserProfile(null);
         }
@@ -73,15 +88,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
   const login = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    await logActivity(userCredential.user.uid, 'Login', 'User logged in successfully.');
   };
 
   const logout = async () => {
+    if (user) {
+        await logActivity(user.uid, 'Logout', 'User logged out.');
+    }
     await signOut(auth);
     router.push('/');
   };

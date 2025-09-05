@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Loader2 } from 'lucide-react';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -79,6 +79,15 @@ export default function ProfilePage() {
         wifiName: values.wifiName,
       };
       await updateDoc(userDocRef, updatedData);
+
+      // Log the activity
+      await addDoc(collection(db, "activity_log"), {
+        userId: userProfile.uid,
+        type: "ProfileUpdate",
+        description: "User updated their profile information.",
+        timestamp: serverTimestamp(),
+        status: "Info"
+      });
 
       // Optimistically update local profile state
       setUserProfile(prev => prev ? {...prev, ...updatedData} : null);

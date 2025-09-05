@@ -6,7 +6,7 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -91,6 +91,15 @@ export default function WellnessProfilePage() {
     try {
       const userDocRef = doc(db, 'users', userProfile.uid);
       await updateDoc(userDocRef, values);
+      
+      // Log the activity
+      await addDoc(collection(db, "activity_log"), {
+        userId: userProfile.uid,
+        type: "WellnessUpdate",
+        description: "User updated their wellness profile.",
+        timestamp: serverTimestamp(),
+        status: "Info"
+      });
 
       setUserProfile(prev => prev ? {...prev, ...values} : null);
 

@@ -57,3 +57,12 @@ export type Notification = {
   message: string;
   createdAt: FieldValue;
 };
+
+export type Activity = {
+  id?: string;
+  userId: string;
+  type: 'Login' | 'Logout' | 'ProfileUpdate' | 'WellnessUpdate';
+  description: string;
+  timestamp: FieldValue;
+  status: 'Normal' | 'Info' | 'Warning';
+};
