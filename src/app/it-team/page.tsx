@@ -200,6 +200,7 @@ export default function ITTeamDashboardPage() {
 function CreateUserDialog({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
+    
     const form = useForm<z.infer<typeof createUserSchema>>({
         resolver: zodResolver(createUserSchema),
         defaultValues: {
@@ -212,14 +213,12 @@ function CreateUserDialog({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
             wifiName: "",
         },
     });
+
     const role = form.watch("role");
 
     const handleCreateUser = async (values: z.infer<typeof createUserSchema>) => {
         setLoading(true);
         try {
-            // NOTE: This will sign out the current admin user. This is a limitation
-            // of using the client-side SDK for user management.
-            // A production app would use a Cloud Function for this.
             const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
             const user = userCredential.user;
 
@@ -239,7 +238,7 @@ function CreateUserDialog({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
 
             toast({
                 title: "User Created Successfully",
-                description: `An account for ${values.name} has been created. You have been logged out. Please log back in.`,
+                description: `An account for ${values.name} has been created. You may need to log out and log back in to see changes.`,
             });
             form.reset();
             onOpenChange(false);
@@ -254,7 +253,6 @@ function CreateUserDialog({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
             setLoading(false);
         }
     };
-
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -322,7 +320,7 @@ function CreateUserDialog({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
                                         <FormControl>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select a role" />
-                                            </Trigger>
+                                            </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
                                             <SelectItem value="user">Employee</SelectItem>
