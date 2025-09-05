@@ -15,6 +15,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  setUserProfile: React.Dispatch<React.SetStateAction<UserProfile | null>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -44,10 +45,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const profile = { uid: user.uid, ...userDoc.data() } as UserProfile;
           setUserProfile(profile);
           
-          const expectedPath = roleRedirects[profile.role];
-          if (pathname !== expectedPath && publicRoutes.includes(pathname)) {
-            router.replace(expectedPath);
+          const expectedPathPrefix = roleRedirects[profile.role];
+          const isAuthRoute = publicRoutes.includes(pathname);
+          const isOnCorrectDashboard = pathname.startsWith(expectedPathPrefix);
+
+          // If on an auth page, redirect to correct dashboard
+          if (isAuthRoute) {
+            router.replace(expectedPathPrefix);
+          } 
+          // If on the wrong dashboard, redirect them
+          else if (!isOnCorrectDashboard) {
+             // Exception for mock page
+            if (pathname !== '/dashboard/mock-ai-signals') {
+                router.replace(expectedPathPrefix);
+            }
           }
+
         } else {
           // This can happen if user exists in Auth but not Firestore
           await signOut(auth);
@@ -64,7 +77,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [router, pathname]);
+  // Using a stable reference for router and pathname
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
 
   const login = async (email: string, password: string) => {
@@ -85,7 +100,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, login, logout, setUserProfile }}>
       {children}
     </AuthContext.Provider>
   );
