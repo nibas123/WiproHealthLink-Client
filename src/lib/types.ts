@@ -1,75 +1,25 @@
-export type User = {
-  id: string;
+
+export type UserRole = "user" | "doctor" | "it_team";
+
+export type UserProfile = {
+  uid: string;
   name: string;
   email: string;
-  role?: 'Admin' | 'Doctor' | 'Staff';
+  role: UserRole;
+  bayName?: string;
+  seatNumber?: string;
+  wifiName?: string;
   avatar: string;
 };
 
-export type Allergy = {
-  name: string;
-  severity: 'Low' | 'Medium' | 'High' | 'Severe';
-  details: string;
-};
-
-export type Medication = {
-  name: string;
-  dosage: string;
-  reason: string;
-};
-
-export type Condition = {
-  name: string;
-  diagnosed: string;
-  status: 'Active' | 'Inactive' | 'Managed';
-};
-
-export type EmergencyContact = {
-  name: string;
-  relationship: string;
-  phone: string;
-};
-
-export type MedicalHistory = {
-  allergies: Allergy[];
-  medications: Medication[];
-  conditions: Condition[];
-  emergencyContacts: EmergencyContact[];
-};
-
-export type ActivityLog = {
+export type Emergency = {
   id: string;
-  user: string;
-  action: 'Profile Update' | 'Viewed Profile' | 'Emergency Alert' | 'Access Granted' | 'Access Revoked';
-  details: string;
-  timestamp: string;
-};
-
-export type WellnessData = {
-  dailyActivity: {
-    labels: string[];
-    datasets: {
-      label: string;
-      data: number[];
-      color: string;
-    }[];
-  };
-  breakCompliance: {
-    taken: number;
-    recommended: number;
-  };
-  usageHeatmap: {
-    day: string;
-    [hour: string]: number | string;
-  }[];
-};
-
-export type EmergencyAlert = {
-    id: string;
-    employeeId: string;
-    employeeName: string;
-    location: string;
-    timestamp: string;
-    status: 'Pending' | 'Acknowledged';
-    summary: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  bayName: string;
+  seatNumber: string;
+  wifiName: string;
+  timestamp: string; // ISO 8601 string
+  status: 'active' | 'resolved';
 }

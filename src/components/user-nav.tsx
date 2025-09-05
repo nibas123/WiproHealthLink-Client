@@ -11,20 +11,16 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { User } from "@/lib/types"
-import { useGlobalState } from "@/hooks/use-global-state"
+import type { UserProfile } from "@/lib/types"
+import { useAuth } from "@/hooks/use-auth"
 
 interface UserNavProps {
-    user: User;
+    user: UserProfile;
 }
 
 export function UserNav({ user }: UserNavProps) {
-  const { setCurrentUser } = useGlobalState();
-  const userInitials = user.name.split(' ').map(n => n[0]).join('');
-
-  const handleLogout = () => {
-    setCurrentUser(null)
-  }
+  const { logout } = useAuth();
+  const userInitials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
 
   return (
     <DropdownMenu>
@@ -47,22 +43,20 @@ export function UserNav({ user }: UserNavProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>
+           <DropdownMenuItem disabled>
             Profile
             <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
           </DropdownMenuItem>
-          <DropdownMenuItem>
+          <DropdownMenuItem disabled>
             Settings
             <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <Link href="/" onClick={handleLogout}>
-            <DropdownMenuItem>
-                Log out
-                <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
-            </DropdownMenuItem>
-        </Link>
+        <DropdownMenuItem onClick={logout}>
+            Log out
+            <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

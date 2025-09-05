@@ -1,14 +1,12 @@
 
 "use client"
 
-import { Activity, LayoutDashboard } from "lucide-react"
-
 import { Logo } from "@/components/icons"
 import { UserNav } from "@/components/user-nav"
 import { useAuth } from "@/hooks/use-auth"
 import { Loader2 } from "lucide-react"
 
-export default function DashboardLayout({
+export default function ITTeamLayout({
   children,
 }: {
   children: React.ReactNode
@@ -29,7 +27,7 @@ export default function DashboardLayout({
             <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
                 <a href="#" className="flex items-center gap-2 text-lg font-semibold md:text-base">
                     <Logo className="h-8 w-8 text-primary" />
-                    <span className="font-bold">HealthLink</span>
+                    <span className="font-bold">HealthLink (IT Team)</span>
                 </a>
             </nav>
             <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
