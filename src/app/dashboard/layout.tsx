@@ -1,7 +1,7 @@
 
 "use client"
 
-import { Activity, LayoutDashboard, HeartPulse, User } from "lucide-react"
+import { Activity, LayoutDashboard, HeartPulse, User, ShieldCheck } from "lucide-react"
 import { usePathname } from 'next/navigation'
 
 import { Logo } from "@/components/icons"
@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, exact: true },
   { name: 'Profile', href: '/dashboard/profile', icon: User },
+  { name: 'Wellness Profile', href: '/dashboard/wellness-profile', icon: ShieldCheck },
   { name: 'Wellness', href: '/dashboard/wellness', icon: HeartPulse },
   { name: 'Activity Log', href: '/dashboard/activity-log', icon: Activity },
 ]

@@ -27,6 +27,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
+import Link from "next/link"
 
 export default function DashboardPage() {
   const { userProfile } = useAuth()
@@ -142,7 +143,9 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2"><ShieldAlert className="text-destructive"/>Allergies</CardTitle>
-              <Button variant="outline" size="sm" disabled>Edit</Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/dashboard/wellness-profile">Edit</Link>
+              </Button>
             </CardHeader>
             <CardContent>
               <ul className="space-y-3">
@@ -156,7 +159,9 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2"><Pill className="text-primary"/>Medications</CardTitle>
-              <Button variant="outline" size="sm" disabled>Edit</Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/dashboard/wellness-profile">Edit</Link>
+              </Button>
             </CardHeader>
             <CardContent>
                <ul className="space-y-3">
@@ -170,7 +175,9 @@ export default function DashboardPage() {
            <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2"><HeartPulse className="text-green-600"/>Conditions</CardTitle>
-              <Button variant="outline" size="sm" disabled>Edit</Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/dashboard/wellness-profile">Edit</Link>
+              </Button>
             </CardHeader>
             <CardContent>
                <ul className="space-y-3">
@@ -184,7 +191,9 @@ export default function DashboardPage() {
            <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2"><Users className="text-primary"/>Emergency Contacts</CardTitle>
-              <Button variant="outline" size="sm" disabled>Edit</Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/dashboard/wellness-profile">Edit</Link>
+              </Button>
             </CardHeader>
             <CardContent>
                 <ul className="space-y-3">
