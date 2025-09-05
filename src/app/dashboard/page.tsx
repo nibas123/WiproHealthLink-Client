@@ -12,7 +12,7 @@ import {
   CardDescription
 } from "@/components/ui/card"
 import { useAuth } from "@/hooks/use-auth"
-import { collection, addDoc, serverTimestamp } from "firebase/firestore"
+import { collection, addDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -63,7 +63,7 @@ export default function DashboardPage() {
   }
 
   if (!userProfile) {
-    return <div>Loading...</div>
+    return <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>
   }
 
   return (
