@@ -2,7 +2,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { collection, query, where, onSnapshot, doc, updateDoc, getDocs, orderBy } from "firebase/firestore"
+import { collection, query, where, onSnapshot, doc, updateDoc, getDocs } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import type { Emergency } from "@/lib/types"
 import { Button } from "@/components/ui/button"
@@ -81,12 +81,15 @@ export default function DoctorDashboardPage() {
     // Fetch resolved emergencies once
     const fetchResolvedEmergencies = async () => {
         setLoadingResolved(true);
-        const qResolved = query(collection(db, "emergencies"), where("status", "==", "resolved"), orderBy("timestamp", "desc"));
+        // Changed query to remove orderBy to avoid needing a composite index
+        const qResolved = query(collection(db, "emergencies"), where("status", "==", "resolved"));
         const querySnapshot = await getDocs(qResolved);
         const emergencies: Emergency[] = [];
         querySnapshot.forEach((doc) => {
             emergencies.push({ id: doc.id, ...doc.data() } as Emergency);
         });
+        // Sort on the client-side
+        emergencies.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         setResolvedEmergencies(emergencies);
         setLoadingResolved(false);
     }
@@ -109,7 +112,7 @@ export default function DoctorDashboardPage() {
       const newlyResolved = activeEmergencies.find(e => e.id === id);
       setActiveEmergencies(newActive);
       if (newlyResolved) {
-        setResolvedEmergencies(prev => [{...newlyResolved, status: 'resolved'}, ...prev]);
+        setResolvedEmergencies(prev => [{...newlyResolved, status: 'resolved'}, ...prev].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
       }
     } catch (error) {
         console.error("Error resolving emergency: ", error);
