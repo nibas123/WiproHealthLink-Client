@@ -2,9 +2,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { collection, query, where, onSnapshot, doc, updateDoc } from "firebase/firestore"
+import { collection, query, where, onSnapshot, doc, updateDoc, addDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase"
-import type { Emergency } from "@/lib/types"
+import type { Emergency, UserProfile } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -24,12 +24,62 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { formatDistanceToNow } from "date-fns"
-import { Monitor, CheckCircle, Loader2 } from "lucide-react"
+import { Monitor, CheckCircle, Loader2, UserPlus } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/hooks/use-auth"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { Input } from "@/components/ui/input"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose
+} from "@/components/ui/dialog"
+
+
+const createUserSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  email: z.string().email({ message: "Please enter a valid email." }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  role: z.enum(["user", "doctor"], { required_error: "Please select a role." }),
+  bayName: z.string().optional(),
+  seatNumber: z.string().optional(),
+  wifiName: z.string().optional(),
+}).refine(data => {
+    if (data.role === 'user') {
+        return !!data.bayName && !!data.seatNumber && !!data.wifiName;
+    }
+    return true;
+}, {
+    message: "Bay, Seat, and Wi-Fi are required for employees.",
+    path: ["bayName"] 
+});
 
 export default function ITTeamDashboardPage() {
   const [emergencies, setEmergencies] = useState<Emergency[]>([])
   const [loading, setLoading] = useState(true)
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast()
 
   useEffect(() => {
@@ -39,7 +89,6 @@ export default function ITTeamDashboardPage() {
       querySnapshot.forEach((doc) => {
         activeEmergencies.push({ id: doc.id, ...doc.data() } as Emergency);
       });
-      // Sort by timestamp descending
       activeEmergencies.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       setEmergencies(activeEmergencies);
       setLoading(false);
@@ -67,15 +116,18 @@ export default function ITTeamDashboardPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-       <div>
-        <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2">
-            <Monitor className="text-primary"/> Wipro IT Team Dashboard
-        </h1>
-        <p className="text-muted-foreground">
-            Active emergency alerts from employees with network details.
-        </p>
-      </div>
+    <div className="grid gap-6">
+       <div className="flex items-start justify-between">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2">
+                    <Monitor className="text-primary"/> Wipro IT Team Dashboard
+                </h1>
+                <p className="text-muted-foreground">
+                    Manage active emergencies and user accounts.
+                </p>
+            </div>
+            <CreateUserDialog isOpen={isDialogOpen} onOpenChange={setIsDialogOpen}/>
+        </div>
       <Card>
         <CardHeader>
           <CardTitle>Active Emergencies</CardTitle>
@@ -144,3 +196,210 @@ export default function ITTeamDashboardPage() {
     </div>
   );
 }
+
+function CreateUserDialog({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) {
+    const { toast } = useToast();
+    const [loading, setLoading] = useState(false);
+    const form = useForm<z.infer<typeof createUserSchema>>({
+        resolver: zodResolver(createUserSchema),
+        defaultValues: {
+            name: "",
+            email: "",
+            password: "",
+            role: "user",
+            bayName: "",
+            seatNumber: "",
+            wifiName: "",
+        },
+    });
+    const role = form.watch("role");
+
+    // This is a workaround for client-side user creation.
+    // A proper implementation would use a backend function.
+    const handleCreateUser = async (values: z.infer<typeof createUserSchema>) => {
+        setLoading(true);
+        try {
+            // We use a separate function to create the user to avoid logging out the admin.
+            // This is a conceptual workaround.
+            const userCredential = await fetch('/api/create-user', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(values)
+            })
+
+            if(!userCredential.ok) {
+              const error = await userCredential.json();
+              throw new Error(error.message || 'Failed to create user.');
+            }
+            
+            const { user } = await userCredential.json();
+
+            const userProfileData: Omit<UserProfile, 'uid' | 'avatar'> = {
+                name: values.name,
+                email: values.email,
+                role: values.role,
+                bayName: values.bayName || '',
+                seatNumber: values.seatNumber || '',
+                wifiName: values.wifiName || '',
+            };
+
+            await setDoc(doc(db, "users", user.uid), {
+                ...userProfileData,
+                avatar: `https://i.pravatar.cc/150?u=${user.uid}`
+            });
+
+            toast({
+                title: "User Created Successfully",
+                description: `An account for ${values.name} has been created.`,
+            });
+            form.reset();
+            onOpenChange(false);
+        } catch (error: any) {
+            console.error("Error creating user:", error);
+            toast({
+                variant: "destructive",
+                title: "User Creation Failed",
+                description: error.message || "An unknown error occurred. The admin may have been logged out.",
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogTrigger asChild>
+                <Button>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Create User Account
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Create New User</DialogTitle>
+                    <DialogDescription>
+                        Fill in the details to create a new account for an employee or doctor.
+                    </DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(handleCreateUser)} className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Full Name</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="John Doe" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="email"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Email</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="name@wipro.com" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="password"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Password</FormLabel>
+                                    <FormControl>
+                                        <Input type="password" placeholder="••••••••" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="role"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Role</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a role" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="user">Employee</SelectItem>
+                                            <SelectItem value="doctor">Doctor</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        {role === 'user' && (
+                            <div className="space-y-4 border p-4 rounded-md bg-muted/50">
+                                <FormField
+                                    control={form.control}
+                                    name="bayName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Bay Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="E.g., Delta Wing" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="seatNumber"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Seat Number</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="E.g., D-34" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="wifiName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Wi-Fi Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="E.g., Wipro-Guest" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        )}
+                        <DialogFooter>
+                            <DialogClose asChild>
+                              <Button type="button" variant="secondary">Cancel</Button>
+                            </DialogClose>
+                            <Button type="submit" disabled={loading}>
+                                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Create User
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
