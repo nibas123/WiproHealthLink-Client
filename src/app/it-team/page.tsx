@@ -219,6 +219,14 @@ function CreateUserDialog({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
     const handleCreateUser = async (values: z.infer<typeof createUserSchema>) => {
         setLoading(true);
         try {
+            // Because creating a user with the client SDK logs out the current user,
+            // we should get the current user's credentials to log them back in after.
+            // NOTE: This is a workaround for not using a server-side function.
+            const currentAdmin = auth.currentUser;
+            if (!currentAdmin) {
+                throw new Error("No admin currently logged in. Please log in again.");
+            }
+
             const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
             const user = userCredential.user;
 
@@ -236,9 +244,16 @@ function CreateUserDialog({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
                 avatar: `https://i.pravatar.cc/150?u=${user.uid}`
             });
 
+            // Re-authenticate the admin user
+            if (currentAdmin.email) {
+                 // This part is tricky without knowing the password. A better approach is Cloud Functions.
+                 // For now, we'll just notify the admin they need to log back in.
+                 await auth.signOut();
+            }
+
             toast({
                 title: "User Created Successfully",
-                description: `An account for ${values.name} has been created. You may need to log out and log back in to see changes.`,
+                description: `Account for ${values.name} created. You have been logged out and need to log back in to continue.`,
             });
             form.reset();
             onOpenChange(false);
@@ -262,7 +277,7 @@ function CreateUserDialog({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
                     Create User Account
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Create New User</DialogTitle>
                     <DialogDescription>
@@ -375,7 +390,7 @@ function CreateUserDialog({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
                                 />
                             </div>
                         )}
-                        <DialogFooter>
+                        <DialogFooter className="sticky bottom-0 bg-background pt-4">
                             <DialogClose asChild>
                               <Button type="button" variant="secondary">Cancel</Button>
                             </DialogClose>
