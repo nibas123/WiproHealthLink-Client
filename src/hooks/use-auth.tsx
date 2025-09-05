@@ -47,22 +47,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           
           const expectedPathPrefix = roleRedirects[profile.role];
           const isAuthRoute = publicRoutes.includes(pathname);
+          
+          // Allow access to mock page regardless of role
+          const isMockSignalsPage = pathname === '/dashboard/mock-ai-signals';
           const isOnCorrectDashboard = pathname.startsWith(expectedPathPrefix);
 
-          // If on an auth page, redirect to correct dashboard
           if (isAuthRoute) {
             router.replace(expectedPathPrefix);
-          } 
-          // If on the wrong dashboard, redirect them
-          else if (!isOnCorrectDashboard) {
-             // Exception for mock page
-            if (pathname !== '/dashboard/mock-ai-signals') {
-                router.replace(expectedPathPrefix);
-            }
+          } else if (!isOnCorrectDashboard && !isMockSignalsPage) {
+            router.replace(expectedPathPrefix);
           }
 
         } else {
-          // This can happen if user exists in Auth but not Firestore
           await signOut(auth);
           setUserProfile(null);
         }
@@ -77,9 +73,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  // Using a stable reference for router and pathname
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+  }, []);
 
 
   const login = async (email: string, password: string) => {
@@ -91,7 +86,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/');
   };
 
-  if (loading && !publicRoutes.includes(pathname)) {
+  const isProtectedRoute = !publicRoutes.includes(pathname);
+
+  if (loading && isProtectedRoute) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
