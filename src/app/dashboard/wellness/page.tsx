@@ -1,7 +1,8 @@
 
 'use client';
 
-import { TrendingUp, Computer, Coffee } from 'lucide-react';
+import { useMemo } from 'react';
+import { Computer, Coffee } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -24,8 +25,10 @@ import {
 } from 'recharts';
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
+import { useAuth } from '@/hooks/use-auth';
+import { Loader2 } from 'lucide-react';
 
-const weeklyData = [
+const defaultWeeklyData = [
   { day: 'Mon', screenTime: 6.5, breaks: 5 },
   { day: 'Tue', screenTime: 7, breaks: 6 },
   { day: 'Wed', screenTime: 8, breaks: 4 },
@@ -35,13 +38,40 @@ const weeklyData = [
   { day: 'Sun', screenTime: 0.5, breaks: 1 },
 ];
 
-const complianceData = [
-    { name: 'Compliant', value: 85, color: 'hsl(var(--chart-1))' },
-    { name: 'Non-compliant', value: 15, color: 'hsl(var(--destructive))' },
-];
 
 export default function WellnessPage() {
-  const weeklyAverage = weeklyData.reduce((acc, day) => acc + day.screenTime, 0) / 5; // Weekday average
+  const { userProfile } = useAuth();
+  
+  const wellnessData = useMemo(() => {
+      if (userProfile?.wellnessData) {
+          return userProfile.wellnessData;
+      }
+      return {
+          screenTimeCompliance: 81,
+          breakCompliance: 85,
+          weeklySummary: defaultWeeklyData,
+      }
+  }, [userProfile]);
+
+  const { screenTimeCompliance, breakCompliance, weeklySummary } = wellnessData;
+  
+  const weeklyAverage = weeklySummary.reduce((acc, day) => acc + day.screenTime, 0) / 5; // Weekday average
+
+  const complianceData = [
+      { name: 'Compliant', value: breakCompliance, color: 'hsl(var(--chart-1))' },
+      { name: 'Non-compliant', value: 100 - breakCompliance, color: 'hsl(var(--destructive))' },
+  ];
+  
+  const screenTimeGoal = 8;
+  const currentScreenTime = (screenTimeCompliance / 100) * screenTimeGoal;
+  
+  if (!userProfile) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-6">
@@ -62,14 +92,14 @@ export default function WellnessPage() {
             <CardTitle className="text-sm font-medium">
               Daily Screen Time Goal
             </CardTitle>
-             <Badge variant="outline">Good</Badge>
+             <Badge variant="outline">{screenTimeCompliance > 75 ? 'Good' : 'Needs Improvement'}</Badge>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">6.5 / 8 hours</div>
+            <div className="text-2xl font-bold">{currentScreenTime.toFixed(1)} / {screenTimeGoal} hours</div>
             <p className="text-xs text-muted-foreground">
-              -18% from yesterday
+              {screenTimeCompliance.toFixed(0)}% of your daily goal
             </p>
-            <Progress value={81.25} className="mt-4" />
+            <Progress value={screenTimeCompliance} className="mt-4" />
           </CardContent>
         </Card>
         <Card>
@@ -80,11 +110,11 @@ export default function WellnessPage() {
             <Coffee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">85%</div>
+            <div className="text-2xl font-bold">{breakCompliance}%</div>
             <p className="text-xs text-muted-foreground">
-              +5% from last week
+              {breakCompliance > 80 ? 'You are doing great!' : 'Try to take more breaks'}
             </p>
-             <Progress value={85} className="mt-4" />
+             <Progress value={breakCompliance} className="mt-4" />
           </CardContent>
         </Card>
         <Card>
@@ -114,7 +144,7 @@ export default function WellnessPage() {
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyData}>
+              <BarChart data={weeklySummary}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="day" />
                 <YAxis />
@@ -138,7 +168,7 @@ export default function WellnessPage() {
              <CardDescription>
               Percentage of scheduled breaks taken vs. missed.
             </CardDescription>
-          </CardHeader>
+          </Header>
           <CardContent className="h-[300px] flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -157,7 +187,7 @@ export default function WellnessPage() {
                           const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
                           return (
                             <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central">
-                              {`%${(percent * 100).toFixed(0)}%`}
+                              {`${(percent * 100).toFixed(0)}%`}
                             </text>
                           );
                         }}

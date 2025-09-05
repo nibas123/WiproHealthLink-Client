@@ -25,15 +25,21 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { Separator } from '@/components/ui/separator';
 
 const wellnessProfileSchema = z.object({
   allergies: z.array(z.object({
     name: z.string().min(1, 'Allergy name is required.'),
-    severity: z.string().min(1, 'Severity is required.'),
+    severity: z.enum(['Low', 'Medium', 'High', 'Severe']),
   })).optional(),
   medications: z.array(z.object({
     name: z.string().min(1, 'Medication name is required.'),
@@ -41,7 +47,7 @@ const wellnessProfileSchema = z.object({
   })).optional(),
   conditions: z.array(z.object({
     name: z.string().min(1, 'Condition name is required.'),
-    status: z.string().min(1, 'Status is required.'),
+    status: z.enum(['Active', 'Managed', 'Resolved']),
   })).optional(),
   emergencyContacts: z.array(z.object({
     name: z.string().min(1, 'Contact name is required.'),
@@ -92,7 +98,6 @@ export default function WellnessProfilePage() {
       const userDocRef = doc(db, 'users', userProfile.uid);
       await updateDoc(userDocRef, values);
       
-      // Log the activity
       await addDoc(collection(db, "activity_log"), {
         userId: userProfile.uid,
         type: "WellnessUpdate",
@@ -171,11 +176,21 @@ export default function WellnessProfilePage() {
                     control={form.control}
                     name={`allergies.${index}.severity`}
                     render={({ field }) => (
-                      <FormItem className="flex-1">
+                      <FormItem className='flex-1'>
                         <FormLabel>Severity</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Severe" {...field} />
-                        </FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select severity" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Low">Low</SelectItem>
+                            <SelectItem value="Medium">Medium</SelectItem>
+                            <SelectItem value="High">High</SelectItem>
+                            <SelectItem value="Severe">Severe</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -185,7 +200,7 @@ export default function WellnessProfilePage() {
                   </Button>
                 </div>
               ))}
-              <Button type="button" variant="outline" className="gap-2" onClick={() => appendAllergy({ name: '', severity: '' })}>
+              <Button type="button" variant="outline" className="gap-2" onClick={() => appendAllergy({ name: '', severity: 'Low' })}>
                 <PlusCircle className="h-4 w-4" /> Add Allergy
               </Button>
             </CardContent>
@@ -265,11 +280,20 @@ export default function WellnessProfilePage() {
                     control={form.control}
                     name={`conditions.${index}.status`}
                     render={({ field }) => (
-                      <FormItem className="flex-1">
+                      <FormItem className='flex-1'>
                         <FormLabel>Status</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Managed" {...field} />
-                        </FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select status" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="Active">Active</SelectItem>
+                                <SelectItem value="Managed">Managed</SelectItem>
+                                <SelectItem value="Resolved">Resolved</SelectItem>
+                            </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -279,7 +303,7 @@ export default function WellnessProfilePage() {
                   </Button>
                 </div>
               ))}
-              <Button type="button" variant="outline" className="gap-2" onClick={() => appendCondition({ name: '', status: '' })}>
+              <Button type="button" variant="outline" className="gap-2" onClick={() => appendCondition({ name: '', status: 'Managed' })}>
                 <PlusCircle className="h-4 w-4" /> Add Condition
               </Button>
             </CardContent>

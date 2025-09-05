@@ -5,7 +5,7 @@ export type UserRole = "user" | "doctor" | "it_team";
 
 export type Allergy = {
   name: string;
-  severity: string;
+  severity: 'Low' | 'Medium' | 'High' | 'Severe';
 };
 
 export type Medication = {
@@ -15,7 +15,7 @@ export type Medication = {
 
 export type Condition = {
   name: string;
-  status: string;
+  status: 'Active' | 'Managed' | 'Resolved';
 };
 
 export type EmergencyContact = {
@@ -23,6 +23,13 @@ export type EmergencyContact = {
   relationship: string;
   phone: string;
 };
+
+export type WellnessData = {
+    screenTimeCompliance: number; // Percentage
+    breakCompliance: number; // Percentage
+    weeklySummary: { day: string; screenTime: number; breaks: number }[];
+};
+
 
 export type UserProfile = {
   uid: string;
@@ -37,6 +44,7 @@ export type UserProfile = {
   medications?: Medication[];
   conditions?: Condition[];
   emergencyContacts?: EmergencyContact[];
+  wellnessData?: WellnessData;
 };
 
 export type Emergency = {
