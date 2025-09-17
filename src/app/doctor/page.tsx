@@ -24,8 +24,10 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { formatDistanceToNow } from "date-fns"
-import { Siren, CheckCircle, Loader2, History } from "lucide-react"
+import { Siren, CheckCircle, Loader2, History, Brain } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { DoctorDashboard } from "@/components/doctor/doctor-dashboard"
 
 export default function DoctorDashboardPage() {
   const [activeEmergencies, setActiveEmergencies] = useState<Emergency[]>([])
@@ -112,7 +114,7 @@ export default function DoctorDashboardPage() {
       const newlyResolved = activeEmergencies.find(e => e.id === id);
       setActiveEmergencies(newActive);
       if (newlyResolved) {
-        setResolvedEmergencies(prev => [{...newlyResolved, status: 'resolved'}, ...prev].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+        setResolvedEmergencies(prev => [{...newlyResolved, status: 'resolved' as const}, ...prev].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
       }
     } catch (error) {
         console.error("Error resolving emergency: ", error);
@@ -131,10 +133,29 @@ export default function DoctorDashboardPage() {
             <Siren className="text-destructive"/> Doctor Dashboard
         </h1>
         <p className="text-muted-foreground">
-            Active and resolved emergency alerts from employees.
+            Emergency alerts and AI-powered wellness monitoring for employees.
         </p>
       </div>
-      <Card>
+
+      <Tabs defaultValue="wellness" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="wellness" className="flex items-center gap-2">
+            <Brain className="h-4 w-4" />
+            AI Wellness Monitoring
+          </TabsTrigger>
+          <TabsTrigger value="emergencies" className="flex items-center gap-2">
+            <Siren className="h-4 w-4" />
+            Emergency Alerts
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="wellness">
+          <DoctorDashboard />
+        </TabsContent>
+
+        <TabsContent value="emergencies">
+          <div className="space-y-6">
+            <Card>
         <CardHeader>
           <CardTitle>Active Emergencies</CardTitle>
           <CardDescription>
@@ -261,6 +282,9 @@ export default function DoctorDashboardPage() {
           </Table>
         </CardContent>
       </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -25,7 +25,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { formatDistanceToNow } from "date-fns"
-import { Monitor, CheckCircle, Loader2, UserPlus } from "lucide-react"
+import { Monitor, CheckCircle, Loader2, UserPlus, Settings } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -56,6 +56,8 @@ import {
   DialogFooter,
   DialogClose
 } from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ITTeamDashboard } from "@/components/it-team/it-dashboard"
 
 
 const createUserSchema = z.object({
@@ -123,12 +125,30 @@ export default function ITTeamDashboardPage() {
                     <Monitor className="text-primary"/> Wipro IT Team Dashboard
                 </h1>
                 <p className="text-muted-foreground">
-                    Manage active emergencies and user accounts.
+                    Manage emergencies, user accounts, and AI wellness monitoring system.
                 </p>
             </div>
             <CreateUserDialog isOpen={isDialogOpen} onOpenChange={setIsDialogOpen}/>
         </div>
-      <Card>
+
+      <Tabs defaultValue="wellness" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="wellness" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Wellness System
+          </TabsTrigger>
+          <TabsTrigger value="emergencies" className="flex items-center gap-2">
+            <Monitor className="h-4 w-4" />
+            Emergency Management
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="wellness">
+          <ITTeamDashboard />
+        </TabsContent>
+
+        <TabsContent value="emergencies">
+          <Card>
         <CardHeader>
           <CardTitle>Active Emergencies</CardTitle>
           <CardDescription>
@@ -193,6 +213,8 @@ export default function ITTeamDashboardPage() {
           </Table>
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

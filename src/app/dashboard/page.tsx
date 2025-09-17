@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import { WellnessDashboard } from "@/components/wellness/wellness-dashboard"
 
 const severityVariantMap: { [key: string]: 'default' | 'secondary' | 'destructive' } = {
   severe: 'destructive',
@@ -83,6 +84,9 @@ export default function DashboardPage() {
 
   return (
     <div className="grid gap-6">
+      {/* AI Wellness Monitoring */}
+      <WellnessDashboard userId={userProfile.uid} />
+
        <div className="flex items-start justify-between">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">
