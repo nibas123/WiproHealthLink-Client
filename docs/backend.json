@@ -1,0 +1,161 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Represents a user's profile information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The user's unique ID." },
+        "name": { "type": "string", "description": "The user's full name." },
+        "email": { "type": "string", "format": "email", "description": "The user's email address." },
+        "role": { "type": "string", "enum": ["user", "doctor", "it_team"], "description": "The user's role." },
+        "bayName": { "type": "string", "description": "The user's bay name." },
+        "seatNumber": { "type": "string", "description": "The user's seat number." },
+        "wifiName": { "type": "string", "description": "The user's Wi-Fi name." },
+        "avatar": { "type": "string", "format": "uri", "description": "URL of the user's avatar." },
+        "allergies": {
+            "type": "array",
+            "items": { "$ref": "#/entities/Allergy" }
+        },
+        "medications": {
+            "type": "array",
+            "items": { "$ref": "#/entities/Medication" }
+        },
+        "conditions": {
+            "type": "array",
+            "items": { "$ref": "#/entities/Condition" }
+        },
+        "emergencyContacts": {
+            "type": "array",
+            "items": { "$ref": "#/entities/EmergencyContact" }
+        },
+        "wellnessData": {
+            "$ref": "#/entities/WellnessData"
+        }
+      },
+      "required": ["uid", "name", "email", "role", "avatar"]
+    },
+    "Allergy": {
+        "title": "Allergy",
+        "description": "An allergy a user has.",
+        "type": "object",
+        "properties": {
+            "name": { "type": "string" },
+            "severity": { "type": "string", "enum": ["Low", "Medium", "High", "Severe"] }
+        },
+        "required": ["name", "severity"]
+    },
+    "Medication": {
+        "title": "Medication",
+        "description": "A medication a user is taking.",
+        "type": "object",
+        "properties": {
+            "name": { "type": "string" },
+            "dosage": { "type": "string" }
+        },
+        "required": ["name", "dosage"]
+    },
+    "Condition": {
+        "title": "Condition",
+        "description": "A medical condition a user has.",
+        "type": "object",
+        "properties": {
+            "name": { "type": "string" },
+            "status": { "type": "string", "enum": ["Active", "Managed", "Resolved"] }
+        },
+        "required": ["name", "status"]
+    },
+    "EmergencyContact": {
+        "title": "Emergency Contact",
+        "description": "An emergency contact for a user.",
+        "type": "object",
+        "properties": {
+            "name": { "type": "string" },
+            "relationship": { "type": "string" },
+            "phone": { "type": "string" }
+        },
+        "required": ["name", "relationship", "phone"]
+    },
+    "WellnessData": {
+        "title": "Wellness Data",
+        "description": "User's digital wellness tracking data.",
+        "type": "object",
+        "properties": {
+            "screenTimeCompliance": { "type": "number" },
+            "breakCompliance": { "type": "number" },
+            "weeklySummary": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "day": { "type": "string" },
+                        "screenTime": { "type": "number" },
+                        "breaks": { "type": "number" }
+                    }
+                }
+            }
+        }
+    },
+    "Emergency": {
+        "title": "Emergency",
+        "description": "An emergency alert.",
+        "type": "object",
+        "properties": {
+            "userId": { "type": "string" },
+            "userName": { "type": "string" },
+            "userAvatar": { "type": "string" },
+            "bayName": { "type": "string" },
+            "seatNumber": { "type": "string" },
+            "wifiName": { "type": "string" },
+            "timestamp": { "type": "string", "format": "date-time" },
+            "status": { "type": "string", "enum": ["active", "resolved"] }
+        },
+        "required": ["userId", "userName", "bayName", "seatNumber", "timestamp", "status"]
+    },
+    "Notification": {
+        "title": "Notification",
+        "description": "A notification for a user.",
+        "type": "object",
+        "properties": {
+            "userId": { "type": "string" },
+            "message": { "type": "string" },
+            "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["userId", "message", "createdAt"]
+    },
+    "Activity": {
+        "title": "Activity",
+        "description": "A user activity log entry.",
+        "type": "object",
+        "properties": {
+            "userId": { "type": "string" },
+            "type": { "type": "string", "enum": ["Login", "Logout", "ProfileUpdate", "WellnessUpdate"] },
+            "description": { "type": "string" },
+            "timestamp": { "type": "string", "format": "date-time" },
+            "status": { "type": "string", "enum": ["Normal", "Info", "Warning"] }
+        },
+        "required": ["userId", "type", "description", "timestamp", "status"]
+    }
+  },
+  "auth": {
+    "providers": ["password"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Stores user profile information."
+    },
+    "/emergencies/{emergencyId}": {
+        "schema": { "$ref": "#/entities/Emergency" },
+        "description": "Stores emergency alert records."
+    },
+    "/notifications/{notificationId}": {
+        "schema": { "$ref": "#/entities/Notification" },
+        "description": "Stores notifications for users."
+    },
+    "/activity_log/{activityId}": {
+        "schema": { "$ref": "#/entities/Activity" },
+        "description": "Stores user activity logs."
+    }
+  }
+}

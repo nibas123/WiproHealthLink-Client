@@ -1,0 +1,42 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // Any authenticated user can create their own profile
+      allow create: if request.auth != null && isOwner(userId);
+      // Only the owner can read or update their own profile
+      allow read, update: if request.auth != null && isOwner(userId);
+    }
+    
+    // Rules for the 'emergencies' collection
+    match /emergencies/{emergencyId} {
+      // Any authenticated user can create an emergency
+      allow create: if request.auth != null;
+      // Authenticated users with 'doctor' or 'it_team' roles can read and update (resolve) emergencies
+      allow read, update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['doctor', 'it_team'];
+    }
+
+    // Rules for 'notifications' collection
+    match /notifications/{notificationId} {
+        // A user can create a notification for themselves
+        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+        // A user can read/delete their own notifications
+        allow read, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+
+    // Rules for 'activity_log' collection
+    match /activity_log/{activityId} {
+        // A user can create their own activity log entry
+        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+        // A user can only read their own activity logs
+        allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+  }
+}
