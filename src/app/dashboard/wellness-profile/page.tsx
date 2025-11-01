@@ -35,6 +35,8 @@ import {
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const wellnessProfileSchema = z.object({
   allergies: z.array(z.object({
@@ -94,34 +96,45 @@ export default function WellnessProfilePage() {
     if (!userProfile) return;
 
     setIsSubmitting(true);
-    try {
-      const userDocRef = doc(db, 'users', userProfile.uid);
-      await updateDoc(userDocRef, values);
-      
-      await addDoc(collection(db, "activity_log"), {
-        userId: userProfile.uid,
-        type: "WellnessUpdate",
-        description: "User updated their wellness profile.",
-        timestamp: serverTimestamp(),
-        status: "Info"
-      });
+    const userDocRef = doc(db, 'users', userProfile.uid);
 
-      setUserProfile(prev => prev ? {...prev, ...values} : null);
+    updateDoc(userDocRef, values)
+      .then(() => {
+        const activityData = {
+          userId: userProfile.uid,
+          type: "WellnessUpdate",
+          description: "User updated their wellness profile.",
+          timestamp: serverTimestamp(),
+          status: "Info"
+        };
+        addDoc(collection(db, "activity_log"), activityData)
+            .catch(serverError => {
+                const permissionError = new FirestorePermissionError({
+                    path: 'activity_log',
+                    operation: 'create',
+                    requestResourceData: activityData
+                });
+                errorEmitter.emit('permission-error', permissionError);
+            });
 
-      toast({
-        title: 'Wellness Profile Updated',
-        description: 'Your medical information has been successfully saved.',
+        setUserProfile(prev => prev ? {...prev, ...values} : null);
+
+        toast({
+          title: 'Wellness Profile Updated',
+          description: 'Your medical information has been successfully saved.',
+        });
+      })
+      .catch(serverError => {
+        const permissionError = new FirestorePermissionError({
+          path: userDocRef.path,
+          operation: 'update',
+          requestResourceData: values,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
-    } catch (error) {
-      console.error('Error updating wellness profile:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Update Failed',
-        description: 'Could not save your changes. Please try again.',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   if (loading) {

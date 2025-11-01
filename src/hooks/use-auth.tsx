@@ -8,6 +8,10 @@ import { doc, setDoc, getDoc, collection, addDoc, serverTimestamp } from 'fireba
 import { auth, db } from '@/lib/firebase';
 import type { UserProfile, UserRole } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
+import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+
 
 interface AuthContextType {
   user: User | null;
@@ -28,17 +32,23 @@ const roleRedirects: Record<UserRole, string> = {
 };
 
 const logActivity = async (userId: string, type: 'Login' | 'Logout', description: string) => {
-    try {
-        await addDoc(collection(db, "activity_log"), {
-            userId,
-            type,
-            description,
-            timestamp: serverTimestamp(),
-            status: 'Normal'
+    const activityData = {
+        userId,
+        type,
+        description,
+        timestamp: serverTimestamp(),
+        status: 'Normal'
+    };
+    
+    addDoc(collection(db, "activity_log"), activityData)
+        .catch(serverError => {
+            const permissionError = new FirestorePermissionError({
+                path: 'activity_log',
+                operation: 'create',
+                requestResourceData: activityData
+            });
+            errorEmitter.emit('permission-error', permissionError);
         });
-    } catch (error) {
-        console.error("Error logging activity: ", error);
-    }
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -116,6 +126,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider value={{ user, userProfile, loading, login, logout, setUserProfile }}>
+      <FirebaseErrorListener />
       {children}
     </AuthContext.Provider>
   );

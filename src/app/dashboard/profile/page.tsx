@@ -29,6 +29,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -70,42 +72,53 @@ export default function ProfilePage() {
     if (!userProfile) return;
 
     setIsSubmitting(true);
-    try {
-      const userDocRef = doc(db, 'users', userProfile.uid);
-      const updatedData = {
-        name: values.name,
-        bayName: values.bayName,
-        seatNumber: values.seatNumber,
-        wifiName: values.wifiName,
-      };
-      await updateDoc(userDocRef, updatedData);
+    const userDocRef = doc(db, 'users', userProfile.uid);
+    const updatedData = {
+      name: values.name,
+      bayName: values.bayName,
+      seatNumber: values.seatNumber,
+      wifiName: values.wifiName,
+    };
 
-      // Log the activity
-      await addDoc(collection(db, "activity_log"), {
-        userId: userProfile.uid,
-        type: "ProfileUpdate",
-        description: "User updated their profile information.",
-        timestamp: serverTimestamp(),
-        status: "Info"
-      });
+    updateDoc(userDocRef, updatedData)
+      .then(() => {
+        // Log the activity
+        const activityData = {
+          userId: userProfile.uid,
+          type: "ProfileUpdate",
+          description: "User updated their profile information.",
+          timestamp: serverTimestamp(),
+          status: "Info"
+        };
+        addDoc(collection(db, "activity_log"), activityData)
+            .catch(serverError => {
+                const permissionError = new FirestorePermissionError({
+                    path: 'activity_log',
+                    operation: 'create',
+                    requestResourceData: activityData
+                });
+                errorEmitter.emit('permission-error', permissionError);
+            });
 
-      // Optimistically update local profile state
-      setUserProfile(prev => prev ? {...prev, ...updatedData} : null);
+        // Optimistically update local profile state
+        setUserProfile(prev => prev ? {...prev, ...updatedData} : null);
 
-      toast({
-        title: 'Profile Updated',
-        description: 'Your information has been successfully saved.',
+        toast({
+          title: 'Profile Updated',
+          description: 'Your information has been successfully saved.',
+        });
+      })
+      .catch(serverError => {
+        const permissionError = new FirestorePermissionError({
+          path: userDocRef.path,
+          operation: 'update',
+          requestResourceData: updatedData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Update Failed',
-        description: 'Could not save your changes. Please try again.',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
   };
   
   const userInitials = userProfile?.name.split(' ').map(n => n[0]).join('').toUpperCase() || '';

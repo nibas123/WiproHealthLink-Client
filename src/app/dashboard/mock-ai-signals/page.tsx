@@ -21,6 +21,8 @@ import { db } from "@/lib/firebase";
 import type { Notification as NotificationType } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 export default function MockAiSignalsPage() {
   const { toast } = useToast();
@@ -74,17 +76,23 @@ export default function MockAiSignalsPage() {
           toast({ variant: "destructive", title: "You must be logged in" });
           return;
       }
-      try {
-          await addDoc(collection(db, "notifications"), {
-              userId: user.uid,
-              message: "Time for a break!",
-              createdAt: serverTimestamp()
+      const notificationData = {
+          userId: user.uid,
+          message: "Time for a break!",
+          createdAt: serverTimestamp()
+      };
+      addDoc(collection(db, "notifications"), notificationData)
+          .then(() => {
+              toast({ title: "Success", description: "Break notification sent to all your devices." });
+          })
+          .catch(serverError => {
+              const permissionError = new FirestorePermissionError({
+                  path: 'notifications',
+                  operation: 'create',
+                  requestResourceData: notificationData
+              });
+              errorEmitter.emit('permission-error', permissionError);
           });
-          toast({ title: "Success", description: "Break notification sent to all your devices." });
-      } catch (error) {
-          console.error("Error sending notification:", error);
-          toast({ variant: "destructive", title: "Failed to send notification" });
-      }
   }, [user, toast]);
 
   useEffect(() => {
@@ -125,20 +133,26 @@ export default function MockAiSignalsPage() {
   
   const handleWellnessDataChange = useCallback(async (newData: { screenTimeCompliance?: number; breakCompliance?: number }) => {
     if (!userProfile) return;
-    try {
-        const userDocRef = doc(db, 'users', userProfile.uid);
-        const updatedWellnessData = {
-            ...userProfile.wellnessData,
-            screenTimeCompliance: newData.screenTimeCompliance ?? userProfile.wellnessData?.screenTimeCompliance ?? 81,
-            breakCompliance: newData.breakCompliance ?? userProfile.wellnessData?.breakCompliance ?? 85,
-        };
-        await updateDoc(userDocRef, { wellnessData: updatedWellnessData });
-        setUserProfile(prev => prev ? { ...prev, wellnessData: updatedWellnessData } : null);
-    } catch (error) {
-        console.error("Error updating wellness data:", error);
-        toast({ variant: 'destructive', title: "Failed to update wellness data" });
-    }
-}, [userProfile, setUserProfile, toast]);
+    const userDocRef = doc(db, 'users', userProfile.uid);
+    const updatedWellnessData = {
+        ...userProfile.wellnessData,
+        screenTimeCompliance: newData.screenTimeCompliance ?? userProfile.wellnessData?.screenTimeCompliance ?? 81,
+        breakCompliance: newData.breakCompliance ?? userProfile.wellnessData?.breakCompliance ?? 85,
+    };
+    
+    updateDoc(userDocRef, { wellnessData: updatedWellnessData })
+        .then(() => {
+            setUserProfile(prev => prev ? { ...prev, wellnessData: updatedWellnessData } : null);
+        })
+        .catch(serverError => {
+            const permissionError = new FirestorePermissionError({
+                path: userDocRef.path,
+                operation: 'update',
+                requestResourceData: { wellnessData: updatedWellnessData }
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
+  }, [userProfile, setUserProfile]);
 
 
   return (

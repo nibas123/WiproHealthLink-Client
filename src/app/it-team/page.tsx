@@ -56,6 +56,8 @@ import {
   DialogFooter,
   DialogClose
 } from "@/components/ui/dialog"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
 
 const createUserSchema = z.object({
@@ -99,20 +101,22 @@ export default function ITTeamDashboardPage() {
 
   const resolveEmergency = async (id: string) => {
     const emergencyRef = doc(db, "emergencies", id);
-    try {
-      await updateDoc(emergencyRef, { status: "resolved" });
-      toast({
-        title: "Emergency Resolved",
-        description: "The alert has been marked as resolved.",
-      });
-    } catch (error) {
-        console.error("Error resolving emergency: ", error);
-        toast({
-            variant: "destructive",
-            title: "Update Failed",
-            description: "Could not resolve the emergency. Please try again.",
+    const updatedData = { status: "resolved" };
+    updateDoc(emergencyRef, updatedData)
+        .then(() => {
+            toast({
+                title: "Emergency Resolved",
+                description: "The alert has been marked as resolved.",
+            });
         })
-    }
+        .catch(serverError => {
+            const permissionError = new FirestorePermissionError({
+                path: emergencyRef.path,
+                operation: 'update',
+                requestResourceData: updatedData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
   };
 
   return (
@@ -219,9 +223,6 @@ function CreateUserDialog({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
     const handleCreateUser = async (values: z.infer<typeof createUserSchema>) => {
         setLoading(true);
         try {
-            // Because creating a user with the client SDK logs out the current user,
-            // we should get the current user's credentials to log them back in after.
-            // NOTE: This is a workaround for not using a server-side function.
             const currentAdmin = auth.currentUser;
             if (!currentAdmin) {
                 throw new Error("No admin currently logged in. Please log in again.");
@@ -238,16 +239,25 @@ function CreateUserDialog({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
                 seatNumber: values.seatNumber || '',
                 wifiName: values.wifiName || '',
             };
-
-            await setDoc(doc(db, "users", user.uid), {
+            
+            const userDocRef = doc(db, "users", user.uid);
+            const finalDocData = {
                 ...userProfileData,
                 avatar: `https://i.pravatar.cc/150?u=${user.uid}`
+            };
+
+            await setDoc(userDocRef, finalDocData).catch(serverError => {
+              const permissionError = new FirestorePermissionError({
+                  path: userDocRef.path,
+                  operation: 'create',
+                  requestResourceData: finalDocData,
+              });
+              // We throw here because we need to stop execution if profile creation fails.
+              throw permissionError;
             });
 
             // Re-authenticate the admin user
             if (currentAdmin.email) {
-                 // This part is tricky without knowing the password. A better approach is Cloud Functions.
-                 // For now, we'll just notify the admin they need to log back in.
                  await auth.signOut();
             }
 
@@ -258,12 +268,15 @@ function CreateUserDialog({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
             form.reset();
             onOpenChange(false);
         } catch (error: any) {
-            console.error("Error creating user:", error);
-            toast({
-                variant: "destructive",
-                title: "User Creation Failed",
-                description: error.message || "An unknown error occurred. You may need to log back in.",
-            });
+            if (error instanceof FirestorePermissionError) {
+                errorEmitter.emit('permission-error', error);
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "User Creation Failed",
+                    description: error.message || "An unknown error occurred. You may need to log back in.",
+                });
+            }
         } finally {
             setLoading(false);
         }

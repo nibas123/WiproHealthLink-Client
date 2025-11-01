@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
 const severityVariantMap: { [key: string]: 'default' | 'secondary' | 'destructive' } = {
   severe: 'destructive',
@@ -49,32 +51,37 @@ export default function DashboardPage() {
   const handleEmergency = async () => {
     if (!userProfile) return;
     setLoading(true);
-    try {
-      await addDoc(collection(db, "emergencies"), {
-        userId: userProfile.uid,
-        userName: userProfile.name,
-        userAvatar: userProfile.avatar,
-        bayName: userProfile.bayName,
-        seatNumber: userProfile.seatNumber,
-        wifiName: userProfile.wifiName,
-        timestamp: new Date().toISOString(),
-        status: 'active',
-      });
-      toast({
-        variant: "destructive",
-        title: "🚨 Emergency Alert Sent 🚨",
-        description: "The on-duty doctor and IT team have been notified.",
-      });
-    } catch (error) {
-        console.error("Error creating emergency:", error)
+
+    const emergencyData = {
+      userId: userProfile.uid,
+      userName: userProfile.name,
+      userAvatar: userProfile.avatar,
+      bayName: userProfile.bayName,
+      seatNumber: userProfile.seatNumber,
+      wifiName: userProfile.wifiName,
+      timestamp: new Date().toISOString(),
+      status: 'active',
+    };
+
+    addDoc(collection(db, "emergencies"), emergencyData)
+      .then(() => {
         toast({
-            variant: "destructive",
-            title: "Failed to send alert",
-            description: "Please try again.",
-        })
-    } finally {
-        setLoading(false)
-    }
+          variant: "destructive",
+          title: "🚨 Emergency Alert Sent 🚨",
+          description: "The on-duty doctor and IT team have been notified.",
+        });
+      })
+      .catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: 'emergencies',
+          operation: 'create',
+          requestResourceData: emergencyData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }
 
   if (!userProfile) {

@@ -26,6 +26,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { formatDistanceToNow } from "date-fns"
 import { Siren, CheckCircle, Loader2, History } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
 export default function DoctorDashboardPage() {
   const [activeEmergencies, setActiveEmergencies] = useState<Emergency[]>([])
@@ -101,27 +103,30 @@ export default function DoctorDashboardPage() {
 
   const resolveEmergency = async (id: string) => {
     const emergencyRef = doc(db, "emergencies", id);
-    try {
-      await updateDoc(emergencyRef, { status: "resolved" });
-      toast({
-        title: "Emergency Resolved",
-        description: "The alert has been marked as resolved.",
-      });
-      // Refetch resolved list to show the newly resolved item
-      const newActive = activeEmergencies.filter(e => e.id !== id);
-      const newlyResolved = activeEmergencies.find(e => e.id === id);
-      setActiveEmergencies(newActive);
-      if (newlyResolved) {
-        setResolvedEmergencies(prev => [{...newlyResolved, status: 'resolved'}, ...prev].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
-      }
-    } catch (error) {
-        console.error("Error resolving emergency: ", error);
-        toast({
-            variant: "destructive",
-            title: "Update Failed",
-            description: "Could not resolve the emergency. Please try again.",
+    const updatedData = { status: "resolved" };
+    
+    updateDoc(emergencyRef, updatedData)
+        .then(() => {
+            toast({
+                title: "Emergency Resolved",
+                description: "The alert has been marked as resolved.",
+            });
+            // Refetch resolved list to show the newly resolved item
+            const newActive = activeEmergencies.filter(e => e.id !== id);
+            const newlyResolved = activeEmergencies.find(e => e.id === id);
+            setActiveEmergencies(newActive);
+            if (newlyResolved) {
+                setResolvedEmergencies(prev => [{...newlyResolved, status: 'resolved'}, ...prev].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+            }
         })
-    }
+        .catch(serverError => {
+            const permissionError = new FirestorePermissionError({
+                path: emergencyRef.path,
+                operation: 'update',
+                requestResourceData: updatedData
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
   };
 
   return (
