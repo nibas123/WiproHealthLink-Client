@@ -72,7 +72,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const expectedPathPrefix = roleRedirects[profile.role];
           const isAuthRoute = publicRoutes.includes(pathname);
           
-          // Allow access to mock page regardless of role
           const isMockSignalsPage = pathname === '/dashboard/mock-ai-signals';
           const isOnCorrectDashboard = pathname.startsWith(expectedPathPrefix);
 
@@ -83,7 +82,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
 
         } else {
-          // If no profile, treat as logged out
           await signOut(auth);
           setUserProfile(null);
         }
@@ -98,7 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [pathname]);
 
 
   const login = async (email: string, password: string) => {
