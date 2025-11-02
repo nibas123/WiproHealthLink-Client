@@ -42,6 +42,14 @@ const defaultWeeklyData = [
 export default function WellnessPage() {
   const { userProfile } = useAuth();
   
+  if (!userProfile) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   const wellnessData = useMemo(() => {
       if (userProfile?.wellnessData) {
           return userProfile.wellnessData;
@@ -52,14 +60,6 @@ export default function WellnessPage() {
           weeklySummary: defaultWeeklyData,
       }
   }, [userProfile]);
-  
-  if (!userProfile) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
 
   const { screenTimeCompliance, breakCompliance, weeklySummary } = wellnessData;
   
