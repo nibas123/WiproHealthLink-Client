@@ -53,6 +53,14 @@ export default function WellnessPage() {
       }
   }, [userProfile]);
 
+  if (!userProfile) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   const { screenTimeCompliance, breakCompliance, weeklySummary } = wellnessData;
   
   const weeklyAverage = weeklySummary.reduce((acc, day) => acc + day.screenTime, 0) / 5; // Weekday average
@@ -64,14 +72,6 @@ export default function WellnessPage() {
   
   const screenTimeGoal = 8;
   const currentScreenTime = (screenTimeCompliance / 100) * screenTimeGoal;
-  
-  if (!userProfile) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="grid gap-6">
