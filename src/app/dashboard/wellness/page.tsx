@@ -52,7 +52,7 @@ export default function WellnessPage() {
           weeklySummary: defaultWeeklyData,
       }
   }, [userProfile]);
-
+  
   if (!userProfile) {
     return (
       <div className="flex items-center justify-center h-full">
